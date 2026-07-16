@@ -61,13 +61,17 @@ describe('LogAnalyticsDestination', () => {
     it.each([
         {
             ...options(null),
-            'audit': { 'streamName': 1,
-                'uploader': null }
+            'audit': {
+                'streamName': 1,
+                'uploader': null
+            }
         },
         {
             ...options(null),
-            'operational': { 'streamName': 'OperationalStream',
-                'uploader': {} }
+            'operational': {
+                'streamName': 'OperationalStream',
+                'uploader': {}
+            }
         },
         {
             ...options(null),
@@ -173,6 +177,41 @@ describe('LogAnalyticsDestination', () => {
         expect(firstUploader.upload).toHaveBeenCalledWith('rule-one', 'stream-one', expect.any(Array));
 
         expect(secondUploader.upload).toHaveBeenCalledWith('rule-two', 'stream-two', expect.any(Array));
+    });
+
+    it('should retry a factory when its cached uploader is null for an unchanged endpoint', async () => {
+        const uploader: LogAnalyticsUploader = { 'upload': vi.fn().mockResolvedValue(void 0) };
+
+        const operationalFactory = {
+            'create': vi.fn()
+                .mockReturnValueOnce(null)
+                .mockReturnValueOnce(uploader)
+        };
+
+        const destination = await LogAnalyticsDestination.create({
+            'audit': {
+                'ingestionEndpoint': 'https://audit',
+                'streamName': 'AuditStream',
+                'uploader': { 'upload': vi.fn().mockResolvedValue(void 0) }
+            },
+            'operational': {
+                'ingestionEndpoint': 'https://operational',
+                'streamName': 'OperationalStream',
+                'uploader': null,
+                'uploaderFactory': operationalFactory
+            },
+            'ruleId': 'rule-id'
+        });
+
+        await destination!.log(operational);
+
+        expect(operationalFactory.create).toHaveBeenCalledTimes(2);
+
+        expect(operationalFactory.create).toHaveBeenNthCalledWith(1, 'https://operational');
+
+        expect(operationalFactory.create).toHaveBeenNthCalledWith(2, 'https://operational');
+
+        expect(uploader.upload).toHaveBeenCalledWith('rule-id', 'OperationalStream', expect.any(Array));
     });
 
     it('should contain uploader failures rather than reject logging calls', async () => {

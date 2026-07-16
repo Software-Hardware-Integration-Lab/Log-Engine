@@ -240,15 +240,19 @@ export class LogAnalyticsDestination extends LoggingPlugin {
             return null;
         }
 
-        if (channelState.cachedIngestionEndpoint === ingestionEndpoint) {
+        if (channelState.cachedIngestionEndpoint === ingestionEndpoint &&
+            channelState.uploader !== null
+        ) {
             return channelState.uploader;
         }
 
+        const resolvedUploader = channelOptions.uploaderFactory.create(ingestionEndpoint);
+
         channelState.cachedIngestionEndpoint = ingestionEndpoint;
 
-        channelState.uploader = channelOptions.uploaderFactory.create(ingestionEndpoint);
+        channelState.uploader = resolvedUploader;
 
-        return channelState.uploader;
+        return resolvedUploader;
     }
 
     /**
