@@ -76,7 +76,7 @@ jobs:
       - name: Run the Unit Tests With Coverage
         shell: bash
         run: |
-          npm run coverage | tee coverage-output.txt
+          npm run coverage 2>&1 | tee coverage-output.txt
 
       # Promote the coverage summary into the GitHub Actions job summary for easier PR review
       - name: Publish Coverage Summary
