@@ -85,19 +85,18 @@ jobs:
           node <<'NODE' > coverage-summary.md
           import { readFileSync } from 'node:fs';
 
-          const coverageOutput = readFileSync('coverage-output.txt', 'utf8');
-          const coverageSummary = coverageOutput.slice(coverageOutput.indexOf('Coverage summary'));
-          const metrics = [...coverageSummary.matchAll(/^(Statements|Branches|Functions|Lines)\s+:\s+([\d.]+)%\s+\(\s*(\d+)\/(\d+)\s*\)/gm)];
-
-          if (metrics.length !== 4) {
-            throw new Error('Could not parse the Vitest coverage summary.');
-          }
+          const { total } = JSON.parse(readFileSync('coverage/coverage-summary.json', 'utf8'));
+          const metrics = ['statements', 'branches', 'functions', 'lines'].map((name) => {
+            const metric = total[name];
+            if (!metric) throw new Error(`Missing ${name} coverage metric.`);
+            return [name[0].toUpperCase() + name.slice(1), metric.pct, metric.covered, metric.total];
+          });
 
           console.log('## Coverage Report\n');
           console.log('| Metric | Coverage | Covered |');
           console.log('| --- | ---: | ---: |');
 
-          for (const [, metric, percentage, covered, total] of metrics) {
+          for (const [metric, percentage, covered, total] of metrics) {
             console.log(`| ${metric} | ${percentage}% | ${covered}/${total} |`);
           }
           NODE

@@ -26,7 +26,8 @@ export default defineConfig({
             'reporter': [
                 'text',
                 'html',
-                'lcov'
+                'lcov',
+                'json-summary'
             ]
         }
     }
