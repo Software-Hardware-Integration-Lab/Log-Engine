@@ -1,7 +1,7 @@
 import type { LogRequestMetadata } from './RequestMetadata.js';
 
 /** Getter used to resolve request metadata from the host application at runtime. */
-export type LogRequestMetadataGetter = () => LogRequestMetadata;
+export type LogRequestMetadataGetter = () => LogRequestMetadata | undefined;
 
 /** Guard used to authorize the LogEngine reset API from the host application. */
 export type LogEngineResetAuthorizationGuard = () => boolean;
