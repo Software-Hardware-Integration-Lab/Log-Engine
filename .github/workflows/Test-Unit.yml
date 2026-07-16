@@ -21,6 +21,10 @@ jobs:
     # Display name of the job
     name: Code Unit Test
 
+    # Keep ttsc's native plugin cache outside node_modules, which npm ci removes.
+    env:
+      TTSC_CACHE_DIR: ${{ runner.temp }}/ttsc-cache
+
     # Operating system filter for the runners
     runs-on: ubuntu-latest
 
@@ -43,16 +47,14 @@ jobs:
         with:
           node-version: 24
 
-      # Reuse Go's module and compiler caches for typia's native ttsc plugin.
+      # Reuse ttsc's native plugin binary and private Go build cache for typia.
       - name: Restore typia Native Plugin Cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-typia-go-v1-${{ hashFiles('package-lock.json') }}
+          path: ${{ env.TTSC_CACHE_DIR }}
+          key: ${{ runner.os }}-ttsc-plugin-v2-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-typia-go-v1-
+            ${{ runner.os }}-ttsc-plugin-v2-
 
       # Set up the socket firewall binary
       - name: Install - Socket Firewall
