@@ -93,12 +93,13 @@ export abstract class LogSerializable implements Log {
      * @returns Base serializable log object.
      */
     protected toSerializableLog(): SerializedLog {
-        /** Base structured log object with normalized timestamp representation. */
         return {
-            // I explicitly want to remove the class instance prototype here
-            // eslint-disable-next-line @typescript-eslint/no-misused-spread
-            ...this,
-            'timeGenerated': this.createdIso
+            'requestId': this.requestId,
+            'correlationId': this.correlationId,
+            'timeGenerated': this.createdIso,
+            'userId': this.userId,
+            'message': this.message,
+            'tenantId': this.tenantId
         } satisfies SerializedLog;
     }
 
