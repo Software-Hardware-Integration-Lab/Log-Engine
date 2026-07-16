@@ -6,7 +6,7 @@ import { assertGuardEquals } from 'typia';
 /** File handle operations used by {@link LogFileHandler}. */
 interface LogFileHandlerFileHandle {
     /** Appends a UTF-8 log entry. */
-    'appendFile': (data: string, options: { 'encoding': 'utf8' }) => Promise<void>;
+    'appendFile': (data: string, options: { 'encoding': 'utf8'; }) => Promise<void>;
     /** Closes the file handle. */
     'close': () => Promise<void>;
 }
@@ -23,7 +23,7 @@ export interface LogFileHandlerRuntime {
         'name': string;
     }[]>;
     /** Reads file metadata. */
-    'statFile': (path: string) => Promise<{ 'mtimeMs': number }>;
+    'statFile': (path: string) => Promise<{ 'mtimeMs': number; }>;
     /** Deletes an expired file. */
     'deleteFile': (path: string) => Promise<void>;
     /** Returns the current timestamp in milliseconds. */
@@ -55,13 +55,13 @@ export class LogFileHandler {
 
     protected readonly appliedOptions: ResolvedFileDestinationOptions;
     readonly #diagnosticReporter: FileHandlerDiagnosticReporter;
-    readonly #deleteFileIntervalMinutes: number;
+    readonly #deleteFileIntervalMs: number;
     readonly #runtime: LogFileHandlerRuntime;
 
     constructor(
         appliedOptions: ResolvedFileDestinationOptions,
         diagnosticReporter: FileHandlerDiagnosticReporter,
-        deleteFileIntervalMinutes = 1000 * 60 * 5,
+        deleteFileIntervalMs = 1000 * 60 * 5,
         runtime: Partial<LogFileHandlerRuntime> = {}
     ) {
         // #region Input validation
@@ -69,14 +69,14 @@ export class LogFileHandler {
 
         assertGuardEquals(diagnosticReporter);
 
-        assertGuardEquals(deleteFileIntervalMinutes);
+        assertGuardEquals(deleteFileIntervalMs);
         // #endregion Input validation
 
         this.appliedOptions = appliedOptions;
 
         this.#diagnosticReporter = diagnosticReporter;
 
-        this.#deleteFileIntervalMinutes = deleteFileIntervalMinutes;
+        this.#deleteFileIntervalMs = deleteFileIntervalMs;
 
         this.#runtime = {
             ...DEFAULT_RUNTIME,
@@ -97,7 +97,7 @@ export class LogFileHandler {
                         'Failed to delete expired log files.'
                     );
                 });
-        }, this.#deleteFileIntervalMinutes);
+        }, this.#deleteFileIntervalMs);
 
         // Allow the process to exit if this is the only active timer.
         this.#deleteInterval.unref();
