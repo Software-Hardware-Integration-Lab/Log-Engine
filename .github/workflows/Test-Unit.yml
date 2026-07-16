@@ -90,7 +90,9 @@ jobs:
           COVERAGE_SUMMARY_FILE: coverage-summary.md
         with:
           script: |
-            const { default: publishCoverageComment } = await import('./scripts/publish-coverage-comment.mjs');
+            const { pathToFileURL } = require('node:url');
+            const commentScriptUrl = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/publish-coverage-comment.mjs`);
+            const { default: publishCoverageComment } = await import(commentScriptUrl.href);
             await publishCoverageComment({
               github,
               context,
