@@ -1,0 +1,6 @@
+{
+    "extends": "./prod.tsconfig.json",
+    "compilerOptions": {
+        "sourceMap": true
+    }
+}

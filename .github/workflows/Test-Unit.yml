@@ -1,0 +1,76 @@
+# Display Name of the workflow
+name: Dynamic Analysis - Unit Test
+
+# When this workflow triggers
+on:
+  # Run the unit tests on every change
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # Allows you to run this workflow from other workflows as a library/unit of reusable code
+  workflow_call:
+
+# Define each session of execution that should be executed
+jobs:
+  Test:
+    # Display name of the job
+    name: Code Unit Test
+
+    # Operating system filter for the runners
+    runs-on: ubuntu-latest
+
+    # Sets the scopes available to the github_token injected to the GH Actions runner
+    permissions:
+      contents: read
+
+    # Set of execution steps to perform
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE
+      - name: Download Source Code
+        uses: actions/checkout@v7
+        background: true
+
+      # Set up NodeJS on the build host
+      - name: Set up the Node.JS Runtime
+        uses: actions/setup-node@v6
+        background: true
+        with:
+          node-version: 24
+
+      # Set up the socket firewall binary
+      - name: Install - Socket Firewall
+        uses: SocketDev/action@ba6de6cc0565af1f42295590380973573297e31f
+        background: true
+        with:
+          mode: firewall-free
+
+      # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
+      - name: Steps - Convert Back To Synchronous Execution - Environment Setup
+        wait-all: true
+
+      # Install all of the dependencies
+      - name: Clean Install of the Project Dependencies
+        run: sfw npm ci
+
+      # Build the project, run the unit tests, and print the coverage report into the check log
+      - name: Run the Unit Tests With Coverage
+        shell: bash
+        run: |
+          npm run coverage | tee coverage-output.txt
+
+      # Promote the coverage summary into the GitHub Actions job summary for easier PR review
+      - name: Publish Coverage Summary
+        shell: bash
+        run: |
+          {
+            echo '## Coverage Report'
+            echo
+            echo '```text'
+            sed -n '/=============================== Coverage summary ===============================/,$p' coverage-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
