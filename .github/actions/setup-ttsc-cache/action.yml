@@ -1,0 +1,16 @@
+name: Setup ttsc Cache
+description: Restores ttsc's native plugin and Go build cache for the current job.
+runs:
+  using: composite
+  steps:
+    - name: Configure ttsc Native Plugin Cache
+      shell: bash
+      run: echo "TTSC_CACHE_DIR=$RUNNER_TEMP/ttsc-cache" >> "$GITHUB_ENV"
+
+    - name: Restore ttsc Native Plugin Cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/ttsc-cache
+        key: ${{ runner.os }}-ttsc-plugin-v2-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-ttsc-plugin-v2-
