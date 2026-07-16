@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vitest/config';
+import { coverageThresholds } from './scripts/coverage-thresholds.js';
 
 export default defineConfig({
     'resolve': {
@@ -17,12 +18,7 @@ export default defineConfig({
                 'bin/**/*.d.ts',
                 'bin/**/index.js'
             ],
-            'thresholds': {
-                'branches': 85,
-                'functions': 99,
-                'lines': 95,
-                'statements': 95
-            },
+            'thresholds': coverageThresholds,
             'reporter': [
                 'text',
                 'html',

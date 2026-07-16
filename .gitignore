@@ -136,3 +136,4 @@ dist
 .pnp.*
 /bin
 coverage-output.txt
+coverage-summary.md

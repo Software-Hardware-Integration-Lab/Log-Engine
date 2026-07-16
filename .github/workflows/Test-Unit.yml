@@ -80,27 +80,7 @@ jobs:
 
       # Promote the coverage summary into the GitHub Actions job summary for easier PR review
       - name: Publish Coverage Summary
-        shell: bash
-        run: |
-          node <<'NODE' > coverage-summary.md
-          import { readFileSync } from 'node:fs';
-
-          const { total } = JSON.parse(readFileSync('coverage/coverage-summary.json', 'utf8'));
-          const metrics = ['statements', 'branches', 'functions', 'lines'].map((name) => {
-            const metric = total[name];
-            if (!metric) throw new Error(`Missing ${name} coverage metric.`);
-            return [name[0].toUpperCase() + name.slice(1), metric.pct, metric.covered, metric.total];
-          });
-
-          console.log('## Coverage Report\n');
-          console.log('| Metric | Coverage | Covered |');
-          console.log('| --- | ---: | ---: |');
-
-          for (const [metric, percentage, covered, total] of metrics) {
-            console.log(`| ${metric} | ${percentage}% | ${covered}/${total} |`);
-          }
-          NODE
-          cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
+        run: node ./scripts/publish-coverage-summary.mjs
 
       # Create or update one coverage comment for pull request runs.
       - name: Publish Coverage Report to Pull Request
@@ -110,31 +90,9 @@ jobs:
           COVERAGE_SUMMARY_FILE: coverage-summary.md
         with:
           script: |
-            const marker = '<!-- log-engine-coverage-report -->';
-            const coverageSummary = require('fs').readFileSync(process.env.COVERAGE_SUMMARY_FILE, 'utf8').trim();
-            const body = `${marker}\n${coverageSummary}`;
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number,
-              per_page: 100,
+            const { default: publishCoverageComment } = await import('./scripts/publish-coverage-comment.mjs');
+            await publishCoverageComment({
+              github,
+              context,
+              summaryPath: process.env.COVERAGE_SUMMARY_FILE,
             });
-            const existingComment = comments.find((comment) => comment.body?.includes(marker));
-
-            if (existingComment) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existingComment.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
-                body,
-              });
-            }
