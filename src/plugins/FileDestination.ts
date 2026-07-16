@@ -94,7 +94,7 @@ export class FileDestination extends LoggingPlugin {
             // Ensure the output directory exists before any logging occurs.
             await instance.#runtime.createDirectory(instance.#appliedOptions.outputDirectory);
 
-            // Remove all expired log files at startup.
+            // Start expired-file cleanup interval.
             instance.#fileHandler.startDeleteInterval();
 
             // Return the initialized logging destination instance.

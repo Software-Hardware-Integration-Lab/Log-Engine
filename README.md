@@ -10,7 +10,7 @@ npm install @software-hardware-integration-lab/log-engine
 
 ## Initialize the engine
 
-Configure the host before obtaining the singleton or adding plugins. The `getRequestMetadata` callback is evaluated for every log entry. It should return the identifiers associated with the current operation; when it returns `undefined`, LogEngine uses all-zero UUIDs and an empty user identity.
+Configure the host before obtaining the singleton or adding plugins. The `getRequestMetadata` callback is evaluated for every log entry. It should return the identifiers associated with the current operation; when it returns `undefined`, LogEngine uses all-zero UUID placeholders for correlationId/requestId/userId.
 
 ```typescript
 import {
@@ -52,10 +52,11 @@ logEngine.auditLog({
 
 For web servers, return metadata from an async-local request context. This keeps correlation, user, tenant, and optional request IDs associated with the correct request even after asynchronous work begins.
 
-This follows the pattern used by the older SHIELD application in [`isolatedState.ts`](../SHIELD/src/Router/Middleware/Plugins/isolatedState.ts): middleware creates a correlation ID, resolves the authenticated user when available, sets `X-CORRELATION-ID`, and invokes the remaining middleware inside `AsyncLocalStorage`.
+This follows a common pattern: middleware creates a correlation ID, resolves the authenticated user when available, sets `X-CORRELATION-ID`, and invokes the remaining middleware inside `AsyncLocalStorage`.
 
 ```typescript
 import { AsyncLocalStorage } from 'node:async_hooks';
+import crypto from 'node:crypto';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import {
 	LogEngine,
