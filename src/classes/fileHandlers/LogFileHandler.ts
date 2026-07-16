@@ -145,8 +145,8 @@ export class LogFileHandler {
     }
 
     /**
-     * Removes expired `.log` files from the configured output directory based on the cleanup interval.
-     * Computes a cutoff timestamp using {@link FileDestinationOptions.cleanupIntervalMinutes}, scans the output directory for files, gathers file modification times, and deletes any `.log` files older than the cutoff. Any filesystem errors encountered during stat or deletion are logged to the console.
+     * Removes expired `.log` and `.jsonl` files from the configured output directory.
+     * Computes a cutoff timestamp using {@link ResolvedFileDestinationOptions.logRetentionAgeMinutes}, scans the output directory, and deletes matching files older than the cutoff.
      * Ensures only one cleanup operation runs at a time.
      * @returns A promise that resolves when the cleanup process has completed.
      */
