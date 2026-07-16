@@ -27,6 +27,7 @@ jobs:
     # Sets the scopes available to the github_token injected to the GH Actions runner
     permissions:
       contents: read
+      pull-requests: write
 
     # Set of execution steps to perform
     steps:
@@ -78,10 +79,60 @@ jobs:
       - name: Publish Coverage Summary
         shell: bash
         run: |
-          {
-            echo '## Coverage Report'
-            echo
-            echo '```text'
-            sed -n '/=============================== Coverage summary ===============================/,$p' coverage-output.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          node <<'NODE' > coverage-summary.md
+          import { readFileSync } from 'node:fs';
+
+          const coverageOutput = readFileSync('coverage-output.txt', 'utf8');
+          const coverageSummary = coverageOutput.slice(coverageOutput.indexOf('Coverage summary'));
+          const metrics = [...coverageSummary.matchAll(/^(Statements|Branches|Functions|Lines)\s+:\s+([\d.]+)%\s+\(\s*(\d+)\/(\d+)\s*\)/gm)];
+
+          if (metrics.length !== 4) {
+            throw new Error('Could not parse the Vitest coverage summary.');
+          }
+
+          console.log('## Coverage Report\n');
+          console.log('| Metric | Coverage | Covered |');
+          console.log('| --- | ---: | ---: |');
+
+          for (const [, metric, percentage, covered, total] of metrics) {
+            console.log(`| ${metric} | ${percentage}% | ${covered}/${total} |`);
+          }
+          NODE
+          cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Create or update one coverage comment for pull request runs.
+      - name: Publish Coverage Report to Pull Request
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: actions/github-script@v8
+        env:
+          COVERAGE_SUMMARY_FILE: coverage-summary.md
+        with:
+          script: |
+            const marker = '<!-- log-engine-coverage-report -->';
+            const coverageSummary = require('fs').readFileSync(process.env.COVERAGE_SUMMARY_FILE, 'utf8').trim();
+            const body = `${marker}\n${coverageSummary}`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existingComment = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
