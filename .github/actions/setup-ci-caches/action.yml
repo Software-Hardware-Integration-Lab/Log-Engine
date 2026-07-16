@@ -1,8 +1,16 @@
-name: Setup ttsc Cache
-description: Restores ttsc's native plugin and Go build cache for the current job.
+name: Setup CI Caches
+description: Restores npm's package download cache and ttsc's native plugin cache for the current job.
 runs:
   using: composite
   steps:
+    - name: Restore npm Package Cache
+      uses: actions/cache@v5
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-v1-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-v1-
+
     - name: Configure ttsc Native Plugin Cache
       shell: bash
       run: echo "TTSC_CACHE_DIR=$RUNNER_TEMP/ttsc-cache" >> "$GITHUB_ENV"

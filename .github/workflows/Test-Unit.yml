@@ -54,9 +54,9 @@ jobs:
       - name: Steps - Convert Back To Synchronous Execution - Environment Setup
         wait-all: true
 
-      # Reuse ttsc's native plugin binary and private Go build cache for typia.
-      - name: Restore ttsc Native Plugin Cache
-        uses: ./.github/actions/setup-ttsc-cache
+      # Reuse npm package downloads and ttsc's native plugin cache for typia.
+      - name: Restore CI Caches
+        uses: ./.github/actions/setup-ci-caches
 
       # Install all of the dependencies
       - name: Clean Install of the Project Dependencies
