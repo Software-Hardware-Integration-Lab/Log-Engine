@@ -54,7 +54,7 @@ export class FileDestination extends LoggingPlugin {
         options: FileDestinationOptions = DEFAULT_FILE_DESTINATION_OPTIONS,
         runtime: Partial<FileDestinationRuntime> = {}
     ) {
-        super('FileDestination');
+        super(options.id ?? 'FileDestination');
 
         this.#appliedOptions = FileDestination.#resolveOptions(options);
 

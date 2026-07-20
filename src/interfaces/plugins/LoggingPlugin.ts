@@ -12,6 +12,8 @@ export interface LoggingPluginContract {
 
 /** Common configuration owned by callers and shared across all logging plugins. */
 export interface LoggingPluginConfigurationOptions {
+    /** Optional id string to allow the creation of multiple instances of the same plugin type where necessary. */
+    'id'?: string;
     /** Returns whether audit logs should be written. */
     'getShouldWriteAuditLogs'?: () => boolean;
     /** Returns whether plugin diagnostics should be written. */

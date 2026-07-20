@@ -15,7 +15,7 @@ export class ConsoleDestination extends LoggingPlugin {
      * @param options Optional factory options for console logging behavior.
      */
     private constructor(options: ConsoleDestinationOptions = DEFAULT_CONSOLE_DESTINATION_OPTIONS) {
-        super('ConsoleDestination');
+        super(options.id ?? 'ConsoleDestination');
 
         /** The normalized configuration for this destination instance. */
         const resolvedOptions = ConsoleDestination.#resolveOptions(options);

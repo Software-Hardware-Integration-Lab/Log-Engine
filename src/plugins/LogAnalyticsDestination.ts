@@ -36,7 +36,7 @@ export class LogAnalyticsDestination extends LoggingPlugin {
      * @param options Explicit host-provided options consumed by this destination instance.
      */
     private constructor(options: LogAnalyticsDestinationCreateOptions) {
-        super('LogAnalyticsDestination');
+        super(options.id ?? 'LogAnalyticsDestination');
 
         this.#options = options;
 
