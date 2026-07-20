@@ -74,22 +74,22 @@ describe('LogFileHandler', () => {
         await expect(readFile(join(directory, 'events.jsonl'), 'utf8')).resolves.toBe('{"event":true}\n');
     });
 
-    it('should delete only expired log and jsonl files while preserving fresh and unrelated files', async () => {
+    it('should delete only expired FileDestination log files while preserving fresh and shared-directory files', async () => {
         const { directory, handler } = await createHandler(1);
 
-        const oldLog = join(directory, 'old.log');
+        const oldLog = join(directory, 'OP__2025-01-02_0300.log');
 
-        const oldJson = join(directory, 'old.jsonl');
+        const oldJson = join(directory, 'AUDIT__2025-01-02_0300.jsonl');
 
-        const oldText = join(directory, 'old.txt');
+        const sharedLog = join(directory, 'OP_custom.log');
 
-        const freshLog = join(directory, 'fresh.log');
+        const freshLog = join(directory, 'OP__2025-01-02_0400.log');
 
-        await Promise.all([oldLog, oldJson, oldText, freshLog].map((file) => writeFile(file, 'content')));
+        await Promise.all([oldLog, oldJson, sharedLog, freshLog].map((file) => writeFile(file, 'content')));
 
         const old = new Date(Date.now() - 120_000);
 
-        await Promise.all([oldLog, oldJson, oldText].map((file) => utimes(file, old, old)));
+        await Promise.all([oldLog, oldJson, sharedLog].map((file) => utimes(file, old, old)));
 
         await Promise.all([handler.deleteExpiredLogFiles(), handler.deleteExpiredLogFiles()]);
 
@@ -97,7 +97,7 @@ describe('LogFileHandler', () => {
 
         await expect(readFile(oldJson)).rejects.toMatchObject({ 'code': 'ENOENT' });
 
-        await expect(readFile(oldText, 'utf8')).resolves.toBe('content');
+        await expect(readFile(sharedLog, 'utf8')).resolves.toBe('content');
 
         await expect(readFile(freshLog, 'utf8')).resolves.toBe('content');
     });
@@ -136,15 +136,15 @@ describe('LogFileHandler', () => {
             'readDirectory': () => Promise.resolve([
                 {
                     'isFile': () => true,
-                    'name': 'stat-failure.log'
+                    'name': 'OP__2025-01-02_0300.log'
                 },
                 {
                     'isFile': () => true,
-                    'name': 'delete-failure.jsonl'
+                    'name': 'AUDIT__2025-01-02_0300.jsonl'
                 }
             ]),
             'statFile': (path) => {
-                if (path.endsWith('stat-failure.log')) { return Promise.reject(statFailure); }
+                if (path.endsWith('OP__2025-01-02_0300.log')) { return Promise.reject(statFailure); }
 
                 return Promise.resolve({ 'mtimeMs': 0 });
             }

@@ -145,8 +145,8 @@ export class LogFileHandler {
     }
 
     /**
-     * Removes expired `.log` and `.jsonl` files from the configured output directory.
-     * Computes a cutoff timestamp using {@link ResolvedFileDestinationOptions.logRetentionAgeMinutes}, scans the output directory, and deletes matching files older than the cutoff.
+     * Removes expired FileDestination `.log` and `.jsonl` files from the configured output directory.
+     * Computes a cutoff timestamp using {@link ResolvedFileDestinationOptions.logRetentionAgeMinutes}, scans the output directory, and deletes matching files owned by this destination that are older than the cutoff.
      * Ensures only one cleanup operation runs at a time.
      * @returns A promise that resolves when the cleanup process has completed.
      */
@@ -178,9 +178,15 @@ export class LogFileHandler {
         /** Variable for holding directory entries found in the output folder. */
         const allLogFileEntries = await this.#runtime.readDirectory(this.appliedOptions.outputDirectory);
 
-        /** A list of absolute paths for files in the output directory. */
+        /** A list of absolute paths for FileDestination log files in the output directory. */
         const allFilepaths = allLogFileEntries
-            .filter((fileEntry) => fileEntry.isFile())
+            .filter((fileEntry) => {
+                const filename = fileEntry.name.toLowerCase();
+
+                // Only consider files that match the expected log file naming pattern for this destination. This prevents accidental deletion of unrelated files in the output directory.
+                return fileEntry.isFile() &&
+                    /^(?:op|audit)__\d{4}-\d{2}-\d{2}_\d{4}\.(?:log|jsonl)$/u.test(filename);
+            })
             .map((fileEntry) => join(this.appliedOptions.outputDirectory, fileEntry.name));
 
         /** File stats of the entries found in the log folder including modification timestamps. */
@@ -196,15 +202,11 @@ export class LogFileHandler {
 
             if (!filepath) { continue; }
 
-            const isLogFile =
-                filepath.toLowerCase().endsWith('.log') ||
-                filepath.toLowerCase().endsWith('.jsonl');
-
             // Log any rejections to the debug console.
             if (result.status === 'rejected') {
                 // Log to debug console.
                 this.#diagnosticReporter(result, String(result.reason) || `Failed to stat file: ${ filepath }`);
-            } else if (result.value.mtimeMs < fileCutoffMs && isLogFile) {
+            } else if (result.value.mtimeMs < fileCutoffMs) {
                 // Add expired log to the list
                 expiredLogFilepaths.push(filepath);
             }
