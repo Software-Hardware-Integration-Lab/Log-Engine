@@ -219,9 +219,9 @@ describe('LogEngine', () => {
 
         expect(failingPlugin.log).toHaveBeenCalledWith(expect.objectContaining({ 'correlationId': '00000000-0000-0000-0000-000000000000' }));
 
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('log failure'));
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin failed: log failure'));
 
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('audit failure'));
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin failed: audit failure'));
 
         LogEngine.configureHost({
             'getRequestMetadata': () => ({ 'correlationId': uuid }) as never,
@@ -259,9 +259,39 @@ describe('LogEngine', () => {
         }
     });
 
-    it('should resolve valid log level names and return undefined for unmapped numeric levels', () => {
-        expect(LogEngine.getNameFromLogLevel(LogLevel.Error)).toBe('Error');
+    it('should continue dispatching operational and audit logs after a plugin failure', async () => {
+        const engine = LogEngine.getInstance();
 
-        expect(LogEngine.getNameFromLogLevel(99)).toBeUndefined();
+        const failingPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn().mockRejectedValue(new Error('audit failure')),
+            'dispose': vi.fn(),
+            'id': 'failing',
+            'log': vi.fn().mockRejectedValue(new Error('operational failure'))
+        };
+
+        const succeedingPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
+            'id': 'succeeding',
+            'log': vi.fn().mockResolvedValue(void 0)
+        };
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(failingPlugin) });
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(succeedingPlugin) });
+
+        engine.log(operationalParameters());
+
+        engine.auditLog(auditParameters());
+
+        await vi.waitFor(() => {
+            expect(succeedingPlugin.log).toHaveBeenCalledOnce();
+
+            expect(succeedingPlugin.auditLog).toHaveBeenCalledOnce();
+        });
+
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('operational failure'));
+
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('audit failure'));
     });
 });

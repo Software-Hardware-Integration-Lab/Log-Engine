@@ -327,9 +327,9 @@ export class LogEngine {
      * @param operation The asynchronous plugin logging operation to execute.
      * @returns A promise that resolves after the operation completes or its failure is reported.
      */
-    async #logErrorHandle(log: (() => Promise<void>)) {
+    async #logErrorHandle(logFunction: (() => Promise<void>)) {
         try {
-            await log();
+            await logFunction();
         } catch (error: unknown) {
             LogEngine.#reportInternalError(`Logging plugin failed: ${ error instanceof Error ? error.message : String(error) }`);
         }
