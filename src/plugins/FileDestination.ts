@@ -15,6 +15,8 @@ interface FileDestinationFileHandler {
     'logToFile': LogFileHandler['logToFile'];
     /** Starts expired-file cleanup. */
     'startDeleteInterval': LogFileHandler['startDeleteInterval'];
+    /** Stops expired file cleanup */
+    'stopDeleteInterval': LogFileHandler['stopDeleteInterval'];
 }
 
 /** Runtime dependencies used by {@link FileDestination}. */
@@ -68,6 +70,10 @@ export class FileDestination extends LoggingPlugin {
         };
 
         this.#fileHandler = this.#runtime.createFileHandler(this.#appliedOptions, this.#diagnosticReporter);
+    }
+
+    public override dispose(): void {
+        this.#fileHandler.stopDeleteInterval();
     }
 
     /**

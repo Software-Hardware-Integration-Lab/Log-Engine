@@ -42,6 +42,10 @@ export class ConsoleDestination extends LoggingPlugin {
         }
     }
 
+    public override dispose(): void {
+        // Intentional no-op. ConsoleDestination does not have any dangling operations to clean up.
+    }
+
     /**
      * Logs a formatted operational log string and log object to the configured console method.
      * @param log The operational log to be written.

@@ -92,6 +92,12 @@ export class LogEngine {
             throw new Error('This function is called outside of a test and/or without host authorization.', { 'cause': 'Invalid use of function call' });
         }
 
+        if (this.#instance) {
+            for (const plugin of this.#instance.#pluginList) {
+                plugin.dispose();
+            }
+        }
+
         // Reset the instance to be re-instantiated on the next access request
         this.#instance = void 0;
     }
@@ -178,6 +184,7 @@ export class LogEngine {
         } else {
             // If a plugin with the same ID is already registered, report an internal error and do not add the duplicate plugin.
             LogEngine.#reportInternalError(`Plugin with ID ${ pluginInstance.id } is already registered, so the plugin was not added.`);
+            pluginInstance.dispose();
         }
     }
 
@@ -271,8 +278,10 @@ export class LogEngine {
             return false;
         }
 
-        // Remove the plugin from the list and return true to indicate successful removal.
-        this.#pluginList.splice(pluginIndex, 1);
+        /** The plugin being removed from the engine. */
+        const [plugin] = this.#pluginList.splice(pluginIndex, 1);
+
+        plugin?.dispose();
 
         return true;
     }

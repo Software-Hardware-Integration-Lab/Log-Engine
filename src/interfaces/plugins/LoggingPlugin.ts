@@ -8,6 +8,8 @@ export interface LoggingPluginContract {
     'log': (log: OperationalLog) => Promise<void>;
     /** The audit logging function for the plugin. */
     'auditLog': (log: AuditLog) => Promise<void>;
+    /** The cleanup operation for removing dangling operations when a plugin is removed. */
+    'dispose': () => void;
 }
 
 /** Common configuration owned by callers and shared across all logging plugins. */
@@ -28,10 +30,10 @@ export type LoggingPluginOptionsMode = 'none' | 'optional' | 'required';
 /** The single explicit options object accepted by a logging plugin factory create call. */
 export type LoggingPluginCreateOptions<TOptions = undefined, TMode extends LoggingPluginOptionsMode = 'none'> =
     TMode extends 'none'
-        ? undefined
-        : TMode extends 'optional'
-            ? TOptions | undefined
-            : TOptions;
+    ? undefined
+    : TMode extends 'optional'
+    ? TOptions | undefined
+    : TOptions;
 
 /** Single-argument list for plugin factory creation. */
 export type LoggingPluginCreateArguments<TOptions = undefined, TMode extends LoggingPluginOptionsMode = 'none'> =

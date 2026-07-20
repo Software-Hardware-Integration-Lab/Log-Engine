@@ -81,6 +81,10 @@ export class LogAnalyticsDestination extends LoggingPlugin {
         }
     }
 
+    public override dispose(): void {
+        // Intentional no-op. LogAnalyticsDestination does not have any dangling operations to clean up.
+    }
+
     /**
      * Logs an audit log entry.
      * @param log Audit log object to be logged.

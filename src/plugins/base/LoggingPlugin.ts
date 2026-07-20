@@ -111,6 +111,9 @@ export abstract class LoggingPlugin implements LoggingPluginContract {
      */
     public abstract auditLog(log: AuditLog): Promise<void>;
 
+    /** Cleanup to remove dangling operations when the plugin is removed. */
+    public abstract dispose(): void;
+
     /**
      * Writes debug information using caller-supplied plugin configuration.
      * @param configuration Caller-owned plugin configuration used to decide whether diagnostics are enabled.

@@ -65,6 +65,7 @@ describe('LogEngine', () => {
 
         const plugin: LoggingPluginContract = {
             'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
             'id': 'plugin-1',
             'log': vi.fn().mockResolvedValue(void 0)
         };
@@ -86,6 +87,8 @@ describe('LogEngine', () => {
 
         expect(engine.removePlugin('plugin-1')).toBe(true);
 
+        expect(plugin.dispose).toHaveBeenCalledOnce();
+
         expect(engine.removePlugin('missing')).toBe(false);
 
         expect(engine.getPluginIds()).toEqual(['plugin-2']);
@@ -103,19 +106,57 @@ describe('LogEngine', () => {
 
         const plugin: LoggingPluginContract = {
             'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
             'id': 'duplicate',
             'log': vi.fn().mockResolvedValue(void 0)
         };
 
-        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(plugin) });
+        const duplicatePlugin: LoggingPluginContract = {
+            ...plugin,
+            'dispose': vi.fn()
+        };
 
         await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(plugin) });
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(duplicatePlugin) });
 
         expect(engine.getPluginIds()).toEqual(['duplicate']);
+
+        expect(plugin.dispose).not.toHaveBeenCalled();
+
+        expect(duplicatePlugin.dispose).toHaveBeenCalledOnce();
 
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('returned a falsy value'));
 
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('already registered'));
+    });
+
+    it('should dispose every registered plugin when reset', async () => {
+        const engine = LogEngine.getInstance();
+
+        const firstPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
+            'id': 'first',
+            'log': vi.fn().mockResolvedValue(void 0)
+        };
+
+        const secondPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
+            'id': 'second',
+            'log': vi.fn().mockResolvedValue(void 0)
+        };
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(firstPlugin) });
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(secondPlugin) });
+
+        LogEngine.reset();
+
+        expect(firstPlugin.dispose).toHaveBeenCalledOnce();
+
+        expect(secondPlugin.dispose).toHaveBeenCalledOnce();
     });
 
     it('should enrich logs with host metadata and dispatch operational and audit entries', async () => {
@@ -123,6 +164,7 @@ describe('LogEngine', () => {
 
         const plugin: LoggingPluginContract = {
             'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
             'id': 'receiver',
             'log': vi.fn().mockResolvedValue(void 0)
         };
@@ -162,6 +204,7 @@ describe('LogEngine', () => {
 
         const failingPlugin: LoggingPluginContract = {
             'auditLog': vi.fn().mockRejectedValue('audit failure'),
+            'dispose': vi.fn(),
             'id': 'failure',
             'log': vi.fn().mockRejectedValue(new Error('log failure'))
         };

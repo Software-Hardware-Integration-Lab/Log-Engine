@@ -105,6 +105,30 @@ describe('FileDestination', () => {
         expect(await readdir(directory)).toEqual([]);
     });
 
+    it('should use its supplied instance ID and stop cleanup when disposed', async () => {
+        const handler = {
+            'getCurrentLogFilePath': vi.fn(() => 'output'),
+            'logToFile': vi.fn(() => Promise.resolve()),
+            'startDeleteInterval': vi.fn(),
+            'stopDeleteInterval': vi.fn()
+        };
+
+        const destination = await FileDestination.create({
+            'id': 'audit-archive',
+            'outputDirectory': await temporaryDirectory()
+        }, {
+            'createFileHandler': () => handler
+        });
+
+        expect(destination?.id).toBe('audit-archive');
+
+        expect(handler.startDeleteInterval).toHaveBeenCalledOnce();
+
+        destination?.dispose();
+
+        expect(handler.stopDeleteInterval).toHaveBeenCalledOnce();
+    });
+
     it('should return null and emit diagnostics when startup directory creation fails', async () => {
         const error = new Error('directory unavailable');
 
@@ -132,7 +156,8 @@ describe('FileDestination', () => {
         const handler = {
             'getCurrentLogFilePath': vi.fn(() => 'output'),
             'logToFile': vi.fn(() => Promise.reject(error)),
-            'startDeleteInterval': vi.fn()
+            'startDeleteInterval': vi.fn(),
+            'stopDeleteInterval': vi.fn()
         };
 
         const destination = await FileDestination.create({
