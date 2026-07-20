@@ -1,8 +1,8 @@
 import { type AuditIngestionLog, type LogAnalyticsDestinationChannelOptions, type LogAnalyticsDestinationCreateOptions, type LogAnalyticsUploader, type OperationalIngestionLog } from '#/interfaces/plugins/LogAnalyticsDestination.js';
 import type { AuditLog, OperationalLog } from '#/interfaces/LogEngine.js';
-import { LogEngine } from '../LogEngine.js';
 import { LoggingPlugin } from './base/LoggingPlugin.js';
 import { assertGuardEquals } from 'typia';
+import { getNameFromLogLevel } from '#/helpers/LogHelpers.js';
 
 /** Cached uploader state for a single Log Analytics upload channel. */
 interface LogAnalyticsDestinationChannelState {
@@ -171,7 +171,7 @@ export class LogAnalyticsDestination extends LoggingPlugin {
                 {
                     'AdditionalContext': log.additionalContext ?? null,
                     'CorrelationId': log.correlationId,
-                    'Level': LogEngine.getNameFromLogLevel(log.level) ?? 'UNKNOWN',
+                    'Level': getNameFromLogLevel(log.level) ?? 'UNKNOWN',
                     'Message': log.message,
                     'ShieldTenantId': log.tenantId,
                     'Stack': log.stack ?? null,

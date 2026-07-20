@@ -327,16 +327,12 @@ export class LogEngine {
      * @param operation The asynchronous plugin logging operation to execute.
      * @returns A promise that resolves after the operation completes or its failure is reported.
      */
-    public static getNameFromLogLevel(value: number): string | undefined {
-        // #region input validation
-        assertGuardEquals(value);
-        // #endregion input validation
-
-        /** Convert the LogLevel enum value to its corresponding name. */
-        const name = LogLevel[value];
-
-        // Return the name if it's a string, otherwise return undefined for invalid values.
-        return typeof name === 'string' ? name : void 0;
+    async #logErrorHandle(log: (() => Promise<void>)) {
+        try {
+            await log();
+        } catch (error: unknown) {
+            LogEngine.#reportInternalError(`Logging plugin failed: ${ error instanceof Error ? error.message : String(error) }`);
+        }
     }
 
     /**
