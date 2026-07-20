@@ -228,7 +228,35 @@ describe('LogEngine', () => {
             'shouldAllowReset': () => true
         });
 
-        expect(() => engine.log(operationalParameters())).toThrow('invalid value');
+        expect(() => engine.log(operationalParameters())).toThrow();
+    });
+
+    it('should reject host metadata with malformed UUID identifiers', () => {
+        const engine = LogEngine.getInstance();
+
+        for (const invalidMetadata of [
+            {
+                'correlationId': 'invalid-correlation-id',
+                'userId': 'host-user'
+            },
+            {
+                'correlationId': uuid,
+                'requestId': 'invalid-request-id',
+                'userId': 'host-user'
+            },
+            {
+                'correlationId': uuid,
+                'tenantId': 'invalid-tenant-id',
+                'userId': 'host-user'
+            }
+        ]) {
+            LogEngine.configureHost({
+                'getRequestMetadata': () => invalidMetadata as never,
+                'shouldAllowReset': () => true
+            });
+
+            expect(() => engine.log(operationalParameters())).toThrow();
+        }
     });
 
     it('should resolve valid log level names and return undefined for unmapped numeric levels', () => {

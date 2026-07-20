@@ -301,7 +301,7 @@ export class LogEngine {
         // Iterate through each registered plugin and await its processing of the log entry.
         for (const plugin of this.#pluginList) {
             // Await the plugin operation to process the log entry before moving on to the next plugin, ensuring sequential processing.
-            await plugin.log(logEntry);
+            await this.#logErrorHandle(() => plugin.log(logEntry));
         }
     }
 
@@ -317,14 +317,15 @@ export class LogEngine {
         // Iterate through each registered plugin and await its processing of the audit log entry.
         for (const plugin of this.#pluginList) {
             // Await the plugin operation to process the audit log entry before moving on to the next plugin, ensuring sequential processing.
-            await plugin.auditLog(logEntry);
+            await this.#logErrorHandle(() => plugin.auditLog(logEntry));
         }
     }
 
     /**
-     * Convert a LogLevel enum value to its name.
-     * @param value - The enum value to convert.
-     * @returns The LogLevel name or undefined for invalid values.
+     * Executes a plugin logging operation and reports any failure without
+     * interrupting delivery to remaining plugins.
+     * @param operation The asynchronous plugin logging operation to execute.
+     * @returns A promise that resolves after the operation completes or its failure is reported.
      */
     public static getNameFromLogLevel(value: number): string | undefined {
         // #region input validation
@@ -350,9 +351,7 @@ export class LogEngine {
             return LogEngine.#getNullRequestMetadata();
         }
 
-        if (!LogEngine.#isLogRequestMetadata(requestMetadata)) {
-            throw new TypeError('The injected request metadata getter returned an invalid value.', { 'cause': 'Input Validation' });
-        }
+        assertGuardEquals(requestMetadata);
 
         return requestMetadata;
     }
@@ -387,30 +386,5 @@ export class LogEngine {
             'requestId': '00000000-0000-0000-0000-000000000000',
             'userId': '00000000-0000-0000-0000-000000000000'
         };
-    }
-
-    /**
-     * Determines whether the provided value matches the package-local request metadata contract.
-     * @param requestMetadata Value returned by the injected host getter.
-     * @returns True when the value matches the package-local request metadata contract.
-     */
-    static #isLogRequestMetadata(requestMetadata: unknown): requestMetadata is LogRequestMetadata {
-        if (typeof requestMetadata !== 'object' || requestMetadata === null) {
-            return false;
-        }
-
-        /** Runtime view used to inspect host-provided request metadata. */
-        const requestMetadataInput = requestMetadata as Partial<Record<keyof LogRequestMetadata, unknown>>;
-
-        return typeof requestMetadataInput.correlationId === 'string' &&
-            (
-                typeof requestMetadataInput.requestId === 'string' ||
-                typeof requestMetadataInput.requestId === 'undefined'
-            ) &&
-            (
-                typeof requestMetadataInput.tenantId === 'string' ||
-                typeof requestMetadataInput.tenantId === 'undefined'
-            ) &&
-            typeof requestMetadataInput.userId === 'string';
     }
 }
