@@ -82,6 +82,12 @@ describe('ConsoleDestination', () => {
         expect(error).toHaveBeenCalledWith('2025-01-02 03:04:05.678: WARNING warning', operational);
     });
 
+    it('should dispose without error when no resources are held', async () => {
+        const destination = await ConsoleDestination.create();
+
+        expect(() => destination?.dispose()).not.toThrow();
+    });
+
     it('should return null and report diagnostics when the option map contains an invalid method', async () => {
         const log = vi.spyOn(console, 'log').mockImplementation(() => void 0);
 

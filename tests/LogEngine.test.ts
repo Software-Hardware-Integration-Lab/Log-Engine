@@ -294,4 +294,38 @@ describe('LogEngine', () => {
 
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('audit failure'));
     });
+
+    it('should report failures raised while reporting plugin dispatch errors', async () => {
+        const engine = LogEngine.getInstance();
+
+        const failingPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn().mockRejectedValue(new Error('audit failure')),
+            'dispose': vi.fn(),
+            'id': 'failing',
+            'log': vi.fn().mockRejectedValue(new Error('operational failure'))
+        };
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(failingPlugin) });
+
+        errorSpy
+            .mockImplementationOnce(() => { throw new Error('diagnostic unavailable'); })
+            .mockImplementation(() => void 0);
+
+        engine.log(operationalParameters());
+
+        await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledTimes(2));
+
+        expect(errorSpy).toHaveBeenLastCalledWith(expect.stringContaining('Operational logging plugin failed: diagnostic unavailable'));
+
+        errorSpy
+            .mockReset()
+            .mockImplementationOnce(() => { throw new Error('diagnostic unavailable'); })
+            .mockImplementation(() => void 0);
+
+        engine.auditLog(auditParameters());
+
+        await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledTimes(2));
+
+        expect(errorSpy).toHaveBeenLastCalledWith(expect.stringContaining('Audit logging plugin failed: diagnostic unavailable'));
+    });
 });

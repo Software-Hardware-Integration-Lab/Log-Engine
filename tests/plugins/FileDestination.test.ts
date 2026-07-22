@@ -153,6 +153,8 @@ describe('FileDestination', () => {
 
         const dir = vi.spyOn(console, 'dir').mockImplementation(() => void 0);
 
+        let diagnosticReporter: ((value: unknown, message: string) => void) | undefined;
+
         const handler = {
             'getCurrentLogFilePath': vi.fn(() => 'output'),
             'logToFile': vi.fn(() => Promise.reject(error)),
@@ -164,7 +166,11 @@ describe('FileDestination', () => {
             'getShouldWriteDebugInfo': () => true,
             'outputDirectory': await temporaryDirectory()
         }, {
-            'createFileHandler': () => handler
+            'createFileHandler': (_options, reporter) => {
+                diagnosticReporter = reporter;
+
+                return handler;
+            }
         });
 
         await expect(destination!.log(operational)).resolves.toBeUndefined();
@@ -178,6 +184,10 @@ describe('FileDestination', () => {
         expect(dir).toHaveBeenCalledWith(operational, { 'depth': null });
 
         expect(dir).toHaveBeenCalledWith(audit, { 'depth': null });
+
+        diagnosticReporter?.(error, 'handler diagnostic');
+
+        expect(log).toHaveBeenCalledWith(expect.stringContaining('handler diagnostic'));
     });
 
     it('should return null rather than throw when its options are invalid', async () => {

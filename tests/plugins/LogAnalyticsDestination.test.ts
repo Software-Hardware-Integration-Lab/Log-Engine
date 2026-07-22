@@ -131,6 +131,14 @@ describe('LogAnalyticsDestination', () => {
         expect(uploader.upload).not.toHaveBeenCalled();
     });
 
+    it('should dispose without error when no resources are held', async () => {
+        const uploader: LogAnalyticsUploader = { 'upload': vi.fn().mockResolvedValue(void 0) };
+
+        const destination = await LogAnalyticsDestination.create(options(uploader));
+
+        expect(() => destination?.dispose()).not.toThrow();
+    });
+
     it('should cache factory uploaders until an ingestion endpoint changes and use dynamic identifiers', async () => {
         let endpoint = 'https://one';
 
