@@ -1,5 +1,5 @@
 name: Setup CI
-description: Configures the common CI environment (cache, checkout, Node, and Socket firewall) for a job.
+description: Configures the common CI environment (cache, Node, and Socket firewall) for a job.
 inputs:
   installDependencies:
     description: Run a clean install of project dependencies with npm ci.
@@ -19,11 +19,6 @@ runs:
         key: ${{ runner.os }}-npm-v1-${{ hashFiles('package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-npm-v1-
-
-    # Grab the source code from the repo
-    - name: Checkout Files from Repo
-      background: true
-      uses: actions/checkout@v7
 
     # Enable Node.JS in the build environment
     - name: Install - Node.JS Runtime

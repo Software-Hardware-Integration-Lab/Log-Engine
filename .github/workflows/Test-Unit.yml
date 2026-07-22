@@ -31,6 +31,10 @@ jobs:
 
     # Set of execution steps to perform
     steps:
+      # Checkout is required before using local composite actions from this repository.
+      - name: Download Source Code
+        uses: actions/checkout@v7
+
       # Prepare runner environment shared across CI workflows.
       - name: Setup CI Environment
         uses: ./.github/actions/setup-ci

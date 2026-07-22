@@ -69,6 +69,10 @@ jobs:
         background: true
         run: echo run identifier ${{ inputs.correlationId }}
 
+      # Checkout is required before using local composite actions from this repository.
+      - name: Checkout Files from Repo
+        uses: actions/checkout@v7
+
       # Prepare runner environment shared across CI workflows.
       - name: Setup CI Environment
         uses: ./.github/actions/setup-ci
