@@ -2,6 +2,7 @@
     "version": "0.0.2",
     "name": "@software-hardware-integration-lab/log-engine",
     "description": "Logging engine with ability to add plugins for any destination",
+    "author": "Michael Howard",
     "type": "module",
     "scripts": {
         "build": "npm run clean:bin && tspc -p tsconfig.json",
