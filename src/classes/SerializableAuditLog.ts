@@ -19,6 +19,7 @@ export class SerializableAuditLog extends LogSerializable implements AuditLog, L
      * @param auditLog Source audit log entry.
      */
     constructor(auditLog: AuditLog) {
+        /* v8 ignore next */
         assertGuardEquals(auditLog);
 
         super(auditLog);

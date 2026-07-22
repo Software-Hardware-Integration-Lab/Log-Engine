@@ -91,6 +91,7 @@ export class LogAnalyticsDestination extends LoggingPlugin {
      */
     public async auditLog(log: AuditLog): Promise<void> {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(log);
         // #endregion Input validation
 
@@ -127,6 +128,7 @@ export class LogAnalyticsDestination extends LoggingPlugin {
             ];
 
             // #region Input validation
+            /* v8 ignore next */
             assertGuardEquals<AuditIngestionLog[]>(formattedLogs);
             // #endregion Input validation
 
@@ -145,6 +147,7 @@ export class LogAnalyticsDestination extends LoggingPlugin {
      */
     public async log(log: OperationalLog): Promise<void> {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(log);
         // #endregion Input validation
 
@@ -181,6 +184,7 @@ export class LogAnalyticsDestination extends LoggingPlugin {
             ];
 
             // #region Input validation
+            /* v8 ignore next */
             assertGuardEquals<OperationalIngestionLog[]>(formattedLogs);
             // #endregion Input validation
 

@@ -46,6 +46,7 @@ export class SerializableOperationalLog extends LogSerializable implements Opera
     constructor(operationalLog: OperationalLog) {
         super(operationalLog);
 
+        /* v8 ignore next */
         assertGuardEquals(operationalLog);
 
         this.additionalContext = operationalLog.additionalContext;

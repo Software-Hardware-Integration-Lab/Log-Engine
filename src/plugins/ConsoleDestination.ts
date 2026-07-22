@@ -53,6 +53,7 @@ export class ConsoleDestination extends LoggingPlugin {
      */
     public log(log: OperationalLog): Promise<void> {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(log);
         // #endregion Input validation
 
@@ -82,6 +83,7 @@ export class ConsoleDestination extends LoggingPlugin {
      */
     public auditLog(log: AuditLog): Promise<void> {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(log);
         // #endregion Input validation
 
@@ -119,6 +121,7 @@ export class ConsoleDestination extends LoggingPlugin {
         } = resolveLoggingPluginConfigurationOptions(options, DEFAULT_CONSOLE_DESTINATION_OPTIONS);
 
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(validationInput as Omit<ConsoleDestinationOptions, 'getShouldWriteAuditLogs' | 'getShouldWriteDebugInfo' | 'getShouldWriteOperationalLogs'>);
         // #endregion Input validation
 

@@ -87,6 +87,7 @@ export abstract class LoggingPlugin implements LoggingPluginContract {
      */
     protected constructor(id: string) {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(id);
         // #endregion Input validation
 

@@ -7,6 +7,7 @@ import { assertGuardEquals } from 'typia';
  * @returns The uppercase log level name.
  */
 export function getLogLevelName(logLevel: LogLevel): LogLevelName | 'UNKNOWN' {
+    /* v8 ignore next */
     assertGuardEquals<number>(logLevel);
 
     switch (logLevel) {

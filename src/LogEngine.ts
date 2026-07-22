@@ -195,6 +195,7 @@ export class LogEngine {
      */
     public log(parameters: OperationalLogParameters): void {
         // #region input validation
+        /* v8 ignore next */
         assertGuardEquals(parameters);
         // #endregion input validation
 
@@ -227,6 +228,7 @@ export class LogEngine {
      */
     public auditLog(parameters: AuditLogParameters): void {
         // #region input validation
+        /* v8 ignore next */
         assertGuardEquals(parameters);
         // #endregion input validation
 
@@ -267,6 +269,7 @@ export class LogEngine {
      */
     public removePlugin(pluginId: string): boolean {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(pluginId);
         // #endregion Input validation
 
@@ -296,6 +299,7 @@ export class LogEngine {
      * @returns A promise that resolves when all plugins have processed the log entry.
      */
     async #runLogPlugins(logEntry: OperationalLog): Promise<void> {
+        /* v8 ignore next */
         assertGuardEquals(logEntry);
 
         // Iterate through each registered plugin and await its processing of the log entry.
@@ -347,6 +351,7 @@ export class LogEngine {
             return LogEngine.#getNullRequestMetadata();
         }
 
+        /* v8 ignore next */
         assertGuardEquals(requestMetadata);
 
         return requestMetadata;
@@ -363,6 +368,7 @@ export class LogEngine {
      */
     static #reportInternalError(message: string): void {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(message);
         // #endregion Input validation
 

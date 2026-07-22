@@ -111,6 +111,7 @@ export abstract class LogSerializable implements Log {
      */
     protected static getStringFromMultiTypeLogProperty(property: string | number | Date | undefined, prefix = ''): string {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(property);
         // #endregion Input validation
 

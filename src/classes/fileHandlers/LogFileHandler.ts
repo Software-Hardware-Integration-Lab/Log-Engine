@@ -65,10 +65,13 @@ export class LogFileHandler {
         runtime: Partial<LogFileHandlerRuntime> = {}
     ) {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(appliedOptions);
 
+        /* v8 ignore next */
         assertGuardEquals(diagnosticReporter);
 
+        /* v8 ignore next */
         assertGuardEquals(deleteFileIntervalMs);
         // #endregion Input validation
 
@@ -119,8 +122,10 @@ export class LogFileHandler {
      */
     public getCurrentLogFilePath(filePathPrefix: 'OP_' | 'AUDIT_', now: Date = new Date()): string {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(filePathPrefix);
 
+        /* v8 ignore next */
         assertGuardEquals(now);
 
         // #endregion Input validation
@@ -239,10 +244,13 @@ export class LogFileHandler {
     public async logToFile(filepath: string, log: string, format: FileLogFormat): Promise<void> {
         try {
             // #region Input validation
+            /* v8 ignore next */
             assertGuardEquals(filepath);
 
+            /* v8 ignore next */
             assertGuardEquals(log);
 
+            /* v8 ignore next */
             assertGuardEquals(format);
             // #endregion Input validation
         } catch (error: unknown) {

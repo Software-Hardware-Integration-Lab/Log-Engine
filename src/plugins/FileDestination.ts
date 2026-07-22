@@ -72,6 +72,7 @@ export class FileDestination extends LoggingPlugin {
         this.#fileHandler = this.#runtime.createFileHandler(this.#appliedOptions, this.#diagnosticReporter);
     }
 
+    /** Cleans up file handler delete interval. */
     public override dispose(): void {
         this.#fileHandler.stopDeleteInterval();
     }
@@ -91,6 +92,7 @@ export class FileDestination extends LoggingPlugin {
             const resolvedOptions = FileDestination.#resolveOptions(options);
 
             // #region Input validation
+            /* v8 ignore next */
             assertGuardEquals(resolvedOptions);
             // #endregion Input validation
 
@@ -123,6 +125,7 @@ export class FileDestination extends LoggingPlugin {
      */
     public async auditLog(log: AuditLog): Promise<void> {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(log);
         // #endregion Input validation
 
@@ -161,6 +164,7 @@ export class FileDestination extends LoggingPlugin {
      */
     public async log(log: OperationalLog): Promise<void> {
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(log);
         // #endregion Input validation
 
@@ -206,6 +210,7 @@ export class FileDestination extends LoggingPlugin {
         } = resolveLoggingPluginConfigurationOptions(options, DEFAULT_FILE_DESTINATION_OPTIONS);
 
         // #region Input validation
+        /* v8 ignore next */
         assertGuardEquals(validationInput as Omit<FileDestinationOptions, 'getShouldWriteAuditLogs' | 'getShouldWriteDebugInfo' | 'getShouldWriteOperationalLogs'>);
         // #endregion Input validation
 
