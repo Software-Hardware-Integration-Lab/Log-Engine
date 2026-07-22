@@ -1,0 +1,71 @@
+name: Setup CI
+description: Configures the common CI environment (cache, checkout, Node, and Socket firewall) for a job.
+inputs:
+  installDependencies:
+    description: Run a clean install of project dependencies with npm ci.
+    required: false
+    default: 'true'
+  updateNpm:
+    description: Update npm CLI before dependency installation.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Restore npm Package Cache
+      uses: actions/cache@v5
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-v1-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-v1-
+
+    # Grab the source code from the repo
+    - name: Checkout Files from Repo
+      background: true
+      uses: actions/checkout@v7
+
+    # Enable Node.JS in the build environment
+    - name: Install - Node.JS Runtime
+      uses: actions/setup-node@v6
+      background: true
+      with:
+        node-version: 24
+        registry-url: https://npm.pkg.github.com
+        scope: software-hardware-integration-lab
+
+    # Set up the socket firewall binary
+    - name: Install - Socket Firewall
+      uses: SocketDev/action@ba6de6cc0565af1f42295590380973573297e31f
+      background: true
+      with:
+        mode: firewall-free
+
+    # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
+    - name: Steps - Convert Back To Synchronous Execution - Environment Setup
+      wait-all: true
+
+    # Update the NPM CLI to the latest available version when requested.
+    - name: Update NPM CLI
+      if: ${{ inputs.updateNpm == 'true' }}
+      shell: bash
+      run: sfw npm install -g npm
+
+    # Install project dependencies once per job unless explicitly skipped.
+    - name: Install Project Dependencies
+      if: ${{ inputs.installDependencies == 'true' }}
+      shell: bash
+      run: sfw npm ci
+
+# Not required until we go back to typescript 7 and start using ttsc (if necessary)
+#    - name: Configure ttsc Native Plugin Cache
+#      shell: bash
+#      run: echo "TTSC_CACHE_DIR=$RUNNER_TEMP/ttsc-cache" >> "$GITHUB_ENV"
+
+#    - name: Restore ttsc Native Plugin Cache
+#      uses: actions/cache@v5
+#      with:
+#        path: ${{ runner.temp }}/ttsc-cache
+#        key: ${{ runner.os }}-ttsc-plugin-v2-${{ hashFiles('package-lock.json') }}
+#        restore-keys: |
+#          ${{ runner.os }}-ttsc-plugin-v2-
