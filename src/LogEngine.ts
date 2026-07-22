@@ -1,4 +1,4 @@
-import { type AuditLog, type AuditLogParameters, type LogEngineHostConfiguration, LogLevel, type LogRequestMetadata, type OperationalLog, type OperationalLogParameters } from '#/interfaces/LogEngine.js';
+import { type AuditLog, type AuditLogParameters, type LogEngineHostConfiguration, type LogRequestMetadata, type OperationalLog, type OperationalLogParameters } from '#/interfaces/LogEngine.js';
 import type { LoggingPluginContract, LoggingPluginCreateOptions, LoggingPluginFactory, LoggingPluginOptionsMode } from '#/interfaces/plugins/LoggingPlugin.js';
 import { assertGuardEquals } from 'typia';
 
@@ -184,6 +184,7 @@ export class LogEngine {
         } else {
             // If a plugin with the same ID is already registered, report an internal error and do not add the duplicate plugin.
             LogEngine.#reportInternalError(`Plugin with ID ${ pluginInstance.id } is already registered, so the plugin was not added.`);
+
             pluginInstance.dispose();
         }
     }
@@ -305,7 +306,7 @@ export class LogEngine {
         // Iterate through each registered plugin and await its processing of the log entry.
         for (const plugin of this.#pluginList) {
             // Await the plugin operation to process the log entry before moving on to the next plugin, ensuring sequential processing.
-            await this.#logErrorHandle(() => plugin.log(logEntry));
+            await LogEngine.#logErrorHandle(() => plugin.log(logEntry));
         }
     }
 
@@ -321,17 +322,17 @@ export class LogEngine {
         // Iterate through each registered plugin and await its processing of the audit log entry.
         for (const plugin of this.#pluginList) {
             // Await the plugin operation to process the audit log entry before moving on to the next plugin, ensuring sequential processing.
-            await this.#logErrorHandle(() => plugin.auditLog(logEntry));
+            await LogEngine.#logErrorHandle(() => plugin.auditLog(logEntry));
         }
     }
 
     /**
      * Executes a plugin logging operation and reports any failure without
      * interrupting delivery to remaining plugins.
-     * @param operation The asynchronous plugin logging operation to execute.
+     * @param logFunction The asynchronous plugin logging operation to execute.
      * @returns A promise that resolves after the operation completes or its failure is reported.
      */
-    async #logErrorHandle(logFunction: (() => Promise<void>)) {
+    static async #logErrorHandle(logFunction: () => Promise<void>): Promise<void> {
         try {
             await logFunction();
         } catch (error: unknown) {

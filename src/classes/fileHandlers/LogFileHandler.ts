@@ -190,7 +190,7 @@ export class LogFileHandler {
 
                 // Only consider files that match the expected log file naming pattern for this destination. This prevents accidental deletion of unrelated files in the output directory.
                 return fileEntry.isFile() &&
-                    /^(?:op|audit)__\d{4}-\d{2}-\d{2}_\d{4}\.(?:log|jsonl)$/u.test(filename);
+                    (/^(?:op|audit)__\d{4}-\d{2}-\d{2}_\d{4}\.(?:log|jsonl)$/u).test(filename);
             })
             .map((fileEntry) => join(this.appliedOptions.outputDirectory, fileEntry.name));
 

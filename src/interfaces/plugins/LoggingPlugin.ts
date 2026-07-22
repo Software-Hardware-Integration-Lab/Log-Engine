@@ -29,11 +29,7 @@ export type LoggingPluginOptionsMode = 'none' | 'optional' | 'required';
 
 /** The single explicit options object accepted by a logging plugin factory create call. */
 export type LoggingPluginCreateOptions<TOptions = undefined, TMode extends LoggingPluginOptionsMode = 'none'> =
-    TMode extends 'none'
-    ? undefined
-    : TMode extends 'optional'
-    ? TOptions | undefined
-    : TOptions;
+    TMode extends 'none' ? undefined : TMode extends 'optional' ? TOptions | undefined : TOptions;
 
 /** Single-argument list for plugin factory creation. */
 export type LoggingPluginCreateArguments<TOptions = undefined, TMode extends LoggingPluginOptionsMode = 'none'> =

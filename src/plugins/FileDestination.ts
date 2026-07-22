@@ -15,7 +15,7 @@ interface FileDestinationFileHandler {
     'logToFile': LogFileHandler['logToFile'];
     /** Starts expired-file cleanup. */
     'startDeleteInterval': LogFileHandler['startDeleteInterval'];
-    /** Stops expired file cleanup */
+    /** Stops expired file cleanup. */
     'stopDeleteInterval': LogFileHandler['stopDeleteInterval'];
 }
 
