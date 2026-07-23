@@ -300,11 +300,11 @@ export class LogEngine {
      * @returns A promise that resolves when all plugins have processed the log entry.
      */
     async #runLogPlugins(logEntry: OperationalLog): Promise<void> {
-        /* v8 ignore next */
-        assertGuardEquals(logEntry);
+        /** Point in time snapshot of the current enabled plugins to avoid race conditions. */
+        const pluginsSnapshot = [...this.#pluginList];
 
         // Iterate through each registered plugin and await its processing of the log entry.
-        for (const plugin of this.#pluginList) {
+        for (const plugin of pluginsSnapshot) {
             // Await the plugin operation to process the log entry before moving on to the next plugin, ensuring sequential processing.
             await LogEngine.#logErrorHandle(() => plugin.log(logEntry));
         }
@@ -319,8 +319,11 @@ export class LogEngine {
      * @returns A promise that resolves when all plugins have processed the audit log entry.
      */
     async #runAuditLogPlugins(logEntry: AuditLog): Promise<void> {
+        /** Point in time snapshot of the current enabled plugins to avoid race conditions. */
+        const pluginsSnapshot = [...this.#pluginList];
+
         // Iterate through each registered plugin and await its processing of the audit log entry.
-        for (const plugin of this.#pluginList) {
+        for (const plugin of pluginsSnapshot) {
             // Await the plugin operation to process the audit log entry before moving on to the next plugin, ensuring sequential processing.
             await LogEngine.#logErrorHandle(() => plugin.auditLog(logEntry));
         }

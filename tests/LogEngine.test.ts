@@ -295,6 +295,56 @@ describe('LogEngine', () => {
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('audit failure'));
     });
 
+    it('should deliver entries accepted before a plugin is removed to later plugins', async () => {
+        const engine = LogEngine.getInstance();
+        let releaseOperationalLog: (() => void) | undefined;
+        let releaseAuditLog: (() => void) | undefined;
+        const operationalLogStarted = new Promise<void>((resolve) => { releaseOperationalLog = resolve; });
+        const auditLogStarted = new Promise<void>((resolve) => { releaseAuditLog = resolve; });
+        const firstPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn(() => auditLogStarted),
+            'dispose': vi.fn(),
+            'id': 'first',
+            'log': vi.fn(() => operationalLogStarted)
+        };
+        const secondPlugin: LoggingPluginContract = {
+            'auditLog': vi.fn().mockResolvedValue(void 0),
+            'dispose': vi.fn(),
+            'id': 'second',
+            'log': vi.fn().mockResolvedValue(void 0)
+        };
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(firstPlugin) });
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(secondPlugin) });
+
+        engine.log(operationalParameters());
+
+        await vi.waitFor(() => expect(firstPlugin.log).toHaveBeenCalledOnce());
+
+        expect(engine.removePlugin('first')).toBe(true);
+
+        releaseOperationalLog?.();
+
+        await vi.waitFor(() => expect(secondPlugin.log).toHaveBeenCalledOnce());
+
+        expect(engine.removePlugin('second')).toBe(true);
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(firstPlugin) });
+
+        await engine.addPlugin({ 'create': vi.fn().mockResolvedValue(secondPlugin) });
+
+        engine.auditLog(auditParameters());
+
+        await vi.waitFor(() => expect(firstPlugin.auditLog).toHaveBeenCalledOnce());
+
+        expect(engine.removePlugin('first')).toBe(true);
+
+        releaseAuditLog?.();
+
+        await vi.waitFor(() => expect(secondPlugin.auditLog).toHaveBeenCalledOnce());
+    });
+
     it('should report failures raised while reporting plugin dispatch errors', async () => {
         const engine = LogEngine.getInstance();
 
