@@ -64,10 +64,9 @@ jobs:
     # Set of steps to execute to build and capture the static HTML
     steps:
       # Used to uniquely identify the specific call to correlate the calling entity with the cross repo build
-      - name: ${{ github.event.inputs.correlationId }}
+      - name: ${{ inputs.correlationId || 'No correlation ID' }}
         id: correlationId
-        background: true
-        run: echo run identifier ${{ inputs.correlationId }}
+        run: echo run identifier "${{ inputs.correlationId || 'No correlation ID' }}"
 
       # Checkout is required before using local composite actions from this repository.
       - name: Checkout Files from Repo
