@@ -67,16 +67,23 @@ jobs:
       - name: ${{ inputs.correlationId || 'No correlation ID' }}
         id: correlationId
         run: echo run identifier "${{ inputs.correlationId || 'No correlation ID' }}"
+        background: true
 
       # Checkout is required before using local composite actions from this repository.
       - name: Checkout Files from Repo
+        background: true
         uses: actions/checkout@v7
 
       # Prepare runner environment shared across CI workflows.
       - name: Setup CI Environment
         uses: ./.github/actions/setup-ci
+        background: true
         with:
           updateNpm: 'true'
+
+      # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
+      - name: Steps - Convert Back To Synchronous Execution - Environment Setup
+        wait-all: true
 
       # Cryptographically attest that packages haven't been tampered where supported
       - name: Attest Dependency Provenance
