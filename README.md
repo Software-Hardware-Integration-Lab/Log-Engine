@@ -110,7 +110,7 @@ function isolatedLoggingState(request: Request, response: Response, next: NextFu
 app.use(isolatedLoggingState);
 ```
 
-Register this middleware before handlers that log. Add `requestId` and `tenantId` to the context when your application has them; both must be UUIDs. SHIELD reads its `AsyncLocalStorage` state from its `getRequestMetadata` host adapter, so each log emitted during a request automatically contains its correlation ID, authenticated user, and tenant ID.
+Register this middleware before handlers that log. Add `requestId` and `tenantId` to the context when your application has them; both must be UUIDs. The host application's `getRequestMetadata` adapter supplies this request context, so each log emitted during a request automatically contains its correlation ID, authenticated user, and tenant ID.
 
 ## Destinations
 
@@ -161,7 +161,7 @@ await logEngine.addPlugin(FileDestination, {
 });
 ```
 
-The default directory is `./logs/dev`, the default rotation interval is 60 minutes, and the default retention period is one day. SHIELD conditionally adds this destination in debug mode, using the runtime write callbacks to control it.
+The default directory is `./logs/dev`, the default rotation interval is 60 minutes, and the default retention period is one day. Host applications can conditionally add this destination, using the runtime write callbacks to control it.
 
 ### LogAnalyticsDestination
 
