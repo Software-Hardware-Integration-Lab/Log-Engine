@@ -24,7 +24,14 @@ if (packageResult.status !== 0) {
 }
 
 const packageMetadata = JSON.parse(packageResult.stdout);
-const packageFiles = packageMetadata[0]?.files?.map((file) => file.path) ?? [];
+
+/*
+ * `npm pack --dry-run --json` has returned an array of package metadata objects on older npm
+ * versions, but newer npm versions instead return an object keyed by package name. Support both
+ * shapes so this script doesn't silently misreport missing files when npm's output format changes.
+ */
+const [packageEntry] = Array.isArray(packageMetadata) ? packageMetadata : Object.values(packageMetadata);
+const packageFiles = packageEntry?.files?.map((file) => file.path) ?? [];
 const requiredFiles = ['LICENSE', 'README.md', 'package.json'];
 const invalidFiles = packageFiles.filter((file) =>
     !requiredFiles.includes(file) && !file.startsWith('bin/')
