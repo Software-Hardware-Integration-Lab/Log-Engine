@@ -40,15 +40,15 @@
         "node": ">=22"
     },
     "dependencies": {
-        "typia": "^12.1.1"
+        "typia": "~12.1.1"
     },
     "devDependencies": {
-        "@software-hardware-integration-lab/development-utilities": "^3.0.0",
-        "@types/node": "^26.1.1",
-        "@vitest/coverage-v8": "^4.1.10",
-        "ts-patch": "^4.0.1",
-        "typescript": "^6.0.3",
-        "vitest": "^4.1.10"
+        "@software-hardware-integration-lab/development-utilities": "~3.0.0",
+        "@types/node": "~26.1.1",
+        "@vitest/coverage-v8": "~4.1.10",
+        "ts-patch": "~4.0.1",
+        "typescript": "~6.0.3",
+        "vitest": "~4.1.10"
     },
     "overrides": {
         "function-bind": "npm:@socketregistry/function-bind@^1",
