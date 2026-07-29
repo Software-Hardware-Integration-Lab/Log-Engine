@@ -14,75 +14,6 @@ export interface LoggingPluginConfigurationResolution {
     'validationInput': unknown;
 }
 
-/**
- * Shared default predicate used when a host wants unconditional logging for a stream.
- * @returns True, indicating that logging should be written.
- */
-export function defaultGetShouldWriteLogs(): boolean {
-    return true;
-}
-
-/**
- * Resolves optional logging-plugin predicates and strips function members from the validation input.
- * @param configuration Caller-owned configuration under evaluation.
- * @param defaultConfiguration Default predicate configuration used when caller predicates are omitted.
- * @returns Resolved predicates alongside a runtime copy that contains only non-function members for validation.
- */
-export function resolveLoggingPluginConfigurationOptions(
-    configuration: unknown,
-    defaultConfiguration: LoggingPluginConfigurationOptions
-): LoggingPluginConfigurationResolution {
-    // # region Input validation
-
-    /* v8 ignore next */
-    assertGuardEquals(defaultConfiguration);
-    // # endregion Input validation
-
-    /** Runtime object view used to inspect optional function members safely. */
-    const configurationObject = typeof configuration === 'object' && configuration !== null
-        ? configuration as Record<string, unknown>
-        : null;
-
-    /** Runtime copy used to validate non-function option members. */
-    const validationInput = configurationObject
-        ? { ...configurationObject }
-        : configuration;
-
-    /** Optional caller-owned audit-write predicate preserved across option resolution. */
-    const getShouldWriteAuditLogs = typeof configurationObject?.getShouldWriteAuditLogs === 'function'
-        ? configurationObject.getShouldWriteAuditLogs as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteAuditLogs']>
-        : defaultConfiguration.getShouldWriteAuditLogs;
-
-    /** Optional caller-owned debug predicate preserved across option resolution. */
-    const getShouldWriteDebugInfo = typeof configurationObject?.getShouldWriteDebugInfo === 'function'
-        ? configurationObject.getShouldWriteDebugInfo as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteDebugInfo']>
-        : defaultConfiguration.getShouldWriteDebugInfo;
-
-    /** Optional caller-owned operational-write predicate preserved across option resolution. */
-    const getShouldWriteOperationalLogs = typeof configurationObject?.getShouldWriteOperationalLogs === 'function'
-        ? configurationObject.getShouldWriteOperationalLogs as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteOperationalLogs']>
-        : defaultConfiguration.getShouldWriteOperationalLogs;
-
-    if (configurationObject && typeof configurationObject.getShouldWriteAuditLogs === 'function') {
-        (validationInput as Record<string, unknown>).getShouldWriteAuditLogs = void 0;
-    }
-
-    if (configurationObject && typeof configurationObject.getShouldWriteDebugInfo === 'function') {
-        (validationInput as Record<string, unknown>).getShouldWriteDebugInfo = void 0;
-    }
-
-    if (configurationObject && typeof configurationObject.getShouldWriteOperationalLogs === 'function') {
-        (validationInput as Record<string, unknown>).getShouldWriteOperationalLogs = void 0;
-    }
-
-    return {
-        getShouldWriteAuditLogs,
-        getShouldWriteDebugInfo,
-        getShouldWriteOperationalLogs,
-        validationInput
-    };
-}
-
 /** Base class for executable logging destinations. */
 export abstract class LoggingPlugin implements LoggingPluginContract {
     /** The unique Id for the plugin. */
@@ -120,6 +51,77 @@ export abstract class LoggingPlugin implements LoggingPluginContract {
 
     /** Cleanup to remove dangling operations when the plugin is removed. */
     public abstract dispose(): void;
+
+    /**
+     * Shared default predicate used when a host wants unconditional logging for a stream.
+     * @returns True, indicating that logging should be written.
+     */
+    protected static defaultGetShouldWriteLogs(): boolean {
+        return true;
+    }
+
+    /**
+     * Resolves optional logging-plugin predicates and strips function members from the validation input.
+     * @param configuration Caller-owned configuration under evaluation.
+     * @param defaultConfiguration Default predicate configuration used when caller predicates are omitted.
+     * @returns Resolved predicates alongside a runtime copy that contains only non-function members for validation.
+     */
+    protected static resolveConfigurationOptions(
+        configuration: unknown,
+        defaultConfiguration: LoggingPluginConfigurationOptions
+    ): LoggingPluginConfigurationResolution {
+        /*
+         * `defaultConfiguration` is never caller-supplied; every call site passes a package-owned
+         * `DEFAULT_*_OPTIONS` constant. Runtime validation would only ever be checking our own
+         * compile-time-checked defaults against themselves, so it is intentionally skipped here,
+         * consistent with how other internal-only values (e.g. in `#writeDebugInfoInternal`) are
+         * handled without `assertGuardEquals`.
+         */
+
+        /** Runtime object view used to inspect optional function members safely. */
+        const configurationObject = typeof configuration === 'object' && configuration !== null
+            ? configuration as Record<string, unknown>
+            : null;
+
+        /** Runtime copy used to validate non-function option members. */
+        const validationInput = configurationObject
+            ? { ...configurationObject }
+            : configuration;
+
+        /** Optional caller-owned audit-write predicate preserved across option resolution. */
+        const getShouldWriteAuditLogs = typeof configurationObject?.getShouldWriteAuditLogs === 'function'
+            ? configurationObject.getShouldWriteAuditLogs as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteAuditLogs']>
+            : defaultConfiguration.getShouldWriteAuditLogs;
+
+        /** Optional caller-owned debug predicate preserved across option resolution. */
+        const getShouldWriteDebugInfo = typeof configurationObject?.getShouldWriteDebugInfo === 'function'
+            ? configurationObject.getShouldWriteDebugInfo as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteDebugInfo']>
+            : defaultConfiguration.getShouldWriteDebugInfo;
+
+        /** Optional caller-owned operational-write predicate preserved across option resolution. */
+        const getShouldWriteOperationalLogs = typeof configurationObject?.getShouldWriteOperationalLogs === 'function'
+            ? configurationObject.getShouldWriteOperationalLogs as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteOperationalLogs']>
+            : defaultConfiguration.getShouldWriteOperationalLogs;
+
+        if (configurationObject && typeof configurationObject.getShouldWriteAuditLogs === 'function') {
+            (validationInput as Record<string, unknown>).getShouldWriteAuditLogs = void 0;
+        }
+
+        if (configurationObject && typeof configurationObject.getShouldWriteDebugInfo === 'function') {
+            (validationInput as Record<string, unknown>).getShouldWriteDebugInfo = void 0;
+        }
+
+        if (configurationObject && typeof configurationObject.getShouldWriteOperationalLogs === 'function') {
+            (validationInput as Record<string, unknown>).getShouldWriteOperationalLogs = void 0;
+        }
+
+        return {
+            getShouldWriteAuditLogs,
+            getShouldWriteDebugInfo,
+            getShouldWriteOperationalLogs,
+            validationInput
+        };
+    }
 
     /**
      * Writes debug information using caller-supplied plugin configuration.

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LoggingPlugin, defaultGetShouldWriteLogs, resolveLoggingPluginConfigurationOptions } from '#/plugins/base/LoggingPlugin.js';
+import { LoggingPlugin } from '#/plugins/base/LoggingPlugin.js';
 import type { AuditLog, OperationalLog } from '#/interfaces/LogEngine.js';
 import type { LoggingPluginConfigurationOptions } from '#/interfaces/plugins/LoggingPlugin.js';
 
@@ -14,6 +14,14 @@ class TestPlugin extends LoggingPlugin {
 
     public static debugWhen(enabled: boolean, object?: unknown, message?: unknown): void {
         this.writeDebugInfoWhen(enabled, object, message);
+    }
+
+    public static defaultShouldWriteLogs(): boolean {
+        return this.defaultGetShouldWriteLogs();
+    }
+
+    public static resolveConfiguration(configuration: unknown, defaultConfiguration: LoggingPluginConfigurationOptions) {
+        return this.resolveConfigurationOptions(configuration, defaultConfiguration);
     }
 
     // eslint-disable-next-line @typescript-eslint/class-methods-use-this
@@ -41,7 +49,7 @@ describe('logging plugin configuration', () => {
             'getShouldWriteOperationalLogs': () => true
         };
 
-        const resolved = resolveLoggingPluginConfigurationOptions({
+        const resolved = TestPlugin.resolveConfiguration({
             'getShouldWriteAuditLogs': audit,
             'getShouldWriteDebugInfo': debug,
             'getShouldWriteOperationalLogs': operational,
@@ -61,7 +69,7 @@ describe('logging plugin configuration', () => {
             'option': 'retained'
         });
 
-        expect(defaultGetShouldWriteLogs()).toBe(true);
+        expect(TestPlugin.defaultShouldWriteLogs()).toBe(true);
     });
 
     it('should use defaults when configuration is missing or predicate values are not functions', () => {
@@ -71,11 +79,11 @@ describe('logging plugin configuration', () => {
             'getShouldWriteOperationalLogs': () => true
         };
 
-        const resolved = resolveLoggingPluginConfigurationOptions({ 'getShouldWriteAuditLogs': false }, defaults);
+        const resolved = TestPlugin.resolveConfiguration({ 'getShouldWriteAuditLogs': false }, defaults);
 
         expect(resolved.getShouldWriteAuditLogs).toBe(defaults.getShouldWriteAuditLogs);
 
-        expect(resolveLoggingPluginConfigurationOptions(null, defaults).validationInput).toBeNull();
+        expect(TestPlugin.resolveConfiguration(null, defaults).validationInput).toBeNull();
     });
 });
 

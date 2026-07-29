@@ -1,4 +1,4 @@
-import { LoggingPlugin, resolveLoggingPluginConfigurationOptions } from './base/LoggingPlugin.js';
+import { LoggingPlugin } from './base/LoggingPlugin.js';
 import { type AuditLog, type OperationalLog } from '#/interfaces/LogEngine.js';
 import { DEFAULT_FILE_DESTINATION_OPTIONS, type FileDestinationOptions, type ResolvedFileDestinationOptions } from '#/interfaces/plugins/FileDestination.js';
 import { mkdir } from 'node:fs/promises';
@@ -207,7 +207,7 @@ export class FileDestination extends LoggingPlugin {
             getShouldWriteDebugInfo,
             getShouldWriteOperationalLogs,
             validationInput
-        } = resolveLoggingPluginConfigurationOptions(options, DEFAULT_FILE_DESTINATION_OPTIONS);
+        } = FileDestination.resolveConfigurationOptions(options, DEFAULT_FILE_DESTINATION_OPTIONS);
 
         // #region Input validation
         /* v8 ignore next */
