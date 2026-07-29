@@ -36,13 +36,6 @@
         "README.md",
         "LICENSE"
     ],
-    "compilerOptions": {
-        "plugins": [
-            {
-                "transform": "typia/lib/transform"
-            }
-        ]
-    },
     "engines": {
         "node": ">=22"
     },
