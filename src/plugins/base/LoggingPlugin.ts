@@ -32,6 +32,10 @@ export function resolveLoggingPluginConfigurationOptions(
     configuration: unknown,
     defaultConfiguration: LoggingPluginConfigurationOptions
 ): LoggingPluginConfigurationResolution {
+    // # region Input validation
+    assertGuardEquals(defaultConfiguration);
+    // # endregion Input validation
+
     /** Runtime object view used to inspect optional function members safely. */
     const configurationObject = typeof configuration === 'object' && configuration !== null
         ? configuration as Record<string, unknown>
