@@ -1,4 +1,5 @@
 import { stat } from 'node:fs/promises';
+import { assertGuardEquals } from 'typia';
 
 /**
  * Checks if the specified file exists.
@@ -6,6 +7,11 @@ import { stat } from 'node:fs/promises';
  * @returns True when the file exists; otherwise false.
  */
 export async function doesFileExist(filepath: string): Promise<boolean> {
+    // #region Input validation
+    /* v8 ignore next */
+    assertGuardEquals(filepath);
+    // #endregion Input validation
+
     // Check if the specified file exists.
     try {
         // Check for an existing file by reading its stats.
