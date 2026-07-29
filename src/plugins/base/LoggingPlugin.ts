@@ -168,6 +168,12 @@ export abstract class LoggingPlugin implements LoggingPluginContract {
         object?: unknown,
         message?: unknown
     ): void {
+        // #region Input validation
+
+        /* v8 ignore next */
+        assertGuardEquals(debugEnabled);
+        // #endregion Input validation
+
         LoggingPlugin.#writeDebugInfoInternal(debugEnabled, this.name, object, message);
     }
 
