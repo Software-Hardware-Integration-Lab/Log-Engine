@@ -127,11 +127,6 @@ export class LogAnalyticsDestination extends LoggingPlugin {
                 }
             ];
 
-            // #region Input validation
-            /* v8 ignore next */
-            assertGuardEquals<AuditIngestionLog[]>(formattedLogs);
-            // #endregion Input validation
-
             await uploader.upload(this.#getRuleId(), LogAnalyticsDestination.#getStreamName(this.#options.audit), formattedLogs);
         } catch (error) {
             /** Error message if present. */
