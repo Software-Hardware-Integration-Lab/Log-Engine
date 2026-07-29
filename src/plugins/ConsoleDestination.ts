@@ -15,6 +15,11 @@ export class ConsoleDestination extends LoggingPlugin {
      * @param options Optional factory options for console logging behavior.
      */
     private constructor(options: ConsoleDestinationOptions = DEFAULT_CONSOLE_DESTINATION_OPTIONS) {
+        /*
+         * Input validation would be duplicated here as this class must be instantiated through the
+         * static create() method to ensure proper error handling and logging of invalid configuration.
+         */
+
         super(options.id ?? 'ConsoleDestination');
 
         /** The normalized configuration for this destination instance. */
@@ -29,6 +34,11 @@ export class ConsoleDestination extends LoggingPlugin {
      * @returns The configured console destination instance, or null if creation fails.
      */
     public static create(options?: ConsoleDestinationOptions): Promise<ConsoleDestination | null> {
+        // #region Input validation
+        /* v8 ignore next */
+        assertGuardEquals(options);
+        // #endregion Input validation
+
         try {
             return Promise.resolve(new ConsoleDestination(options));
         } catch (error: unknown) {
