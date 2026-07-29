@@ -1,6 +1,7 @@
 import { type AuditLog, type AuditLogParameters, type LogEngineHostConfiguration, type LogRequestMetadata, type OperationalLog, type OperationalLogParameters } from '#/interfaces/LogEngine.js';
 import type { LoggingPluginContract, LoggingPluginCreateOptions, LoggingPluginFactory, LoggingPluginOptionsMode } from '#/interfaces/plugins/LoggingPlugin.js';
 import { assertGuardEquals } from 'typia';
+import { UUID_EMPTY } from './helpers/Constants.js';
 
 /** Runtime shape used to inspect the optional create member on a plugin factory input. */
 interface LoggingPluginFactoryInput {
@@ -388,9 +389,9 @@ export class LogEngine {
     static #getNullRequestMetadata(): LogRequestMetadata {
         // Use all-zero UUIDs intentionally so the null-object metadata still satisfies the package-local UUID contract.
         return {
-            'correlationId': '00000000-0000-0000-0000-000000000000',
-            'requestId': '00000000-0000-0000-0000-000000000000',
-            'userId': '00000000-0000-0000-0000-000000000000'
+            'correlationId': UUID_EMPTY,
+            'requestId': UUID_EMPTY,
+            'userId': UUID_EMPTY
         };
     }
 }

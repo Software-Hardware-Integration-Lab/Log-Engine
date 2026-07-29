@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LogEngine } from '#/LogEngine.js';
 import { LogLevel, type AuditLog, type OperationalLog } from '#/interfaces/LogEngine.js';
 import type { LoggingPluginContract } from '#/interfaces/plugins/LoggingPlugin.js';
+import { UUID_EMPTY } from '../src/helpers/Constants';
 
 const uuid = '00000000-0000-0000-0000-000000000001';
 
@@ -217,7 +218,7 @@ describe('LogEngine', () => {
 
         await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledTimes(2));
 
-        expect(failingPlugin.log).toHaveBeenCalledWith(expect.objectContaining({ 'correlationId': '00000000-0000-0000-0000-000000000000' }));
+        expect(failingPlugin.log).toHaveBeenCalledWith(expect.objectContaining({ 'correlationId': UUID_EMPTY }));
 
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin failed: log failure'));
 
