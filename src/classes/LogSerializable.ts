@@ -114,6 +114,7 @@ export abstract class LogSerializable implements Log {
         /* v8 ignore next */
         assertGuardEquals(property);
 
+        /* v8 ignore next */
         assertGuardEquals(prefix);
         // #endregion Input validation
 

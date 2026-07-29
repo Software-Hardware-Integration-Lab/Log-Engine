@@ -33,6 +33,8 @@ export function resolveLoggingPluginConfigurationOptions(
     defaultConfiguration: LoggingPluginConfigurationOptions
 ): LoggingPluginConfigurationResolution {
     // # region Input validation
+
+    /* v8 ignore next */
     assertGuardEquals(defaultConfiguration);
     // # endregion Input validation
 
