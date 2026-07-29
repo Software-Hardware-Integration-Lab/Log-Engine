@@ -113,6 +113,8 @@ export abstract class LogSerializable implements Log {
         // #region Input validation
         /* v8 ignore next */
         assertGuardEquals(property);
+
+        assertGuardEquals(prefix);
         // #endregion Input validation
 
         /** The resulting string after converting the property to a string with the appropriate formatting and prefix. */
