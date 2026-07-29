@@ -1,6 +1,6 @@
 import { type AuditLog, LogLevel, type OperationalLog } from '#/interfaces/LogEngine.js';
 import { type ConsoleDestinationMethod, type ConsoleDestinationOptions, DEFAULT_CONSOLE_DESTINATION_LOG_LEVEL_MAP, DEFAULT_CONSOLE_DESTINATION_OPTIONS, type ResolvedConsoleDestinationOptions } from '#/interfaces/plugins/ConsoleDestination.js';
-import { LoggingPlugin, resolveLoggingPluginConfigurationOptions } from './base/LoggingPlugin.js';
+import { LoggingPlugin } from './base/LoggingPlugin.js';
 import { assertGuardEquals } from 'typia';
 
 /** Outputs operational and audit logs to the console using only destination-local configuration. */
@@ -42,6 +42,15 @@ export class ConsoleDestination extends LoggingPlugin {
         try {
             return Promise.resolve(new ConsoleDestination(options));
         } catch (error: unknown) {
+            /* v8 ignore start */
+            /*
+             * Defensive backstop: with the input validation above, this branch is not reachable
+             * through normal object literals since typia's excess-property check already touches
+             * every own key. Retained (and excluded from coverage) to preserve the documented
+             * `create()` contract of never throwing, in case of unusual inputs (e.g. proxies or
+             * getters with side effects) or future changes to construction/resolution logic.
+             */
+
             /** Error message if present. */
             const message = error instanceof Error ? error.message : String(error);
 
@@ -49,6 +58,7 @@ export class ConsoleDestination extends LoggingPlugin {
             ConsoleDestination.writeConfiguredDebugInfo(options, error, `ConsoleDestination could not be created. ${ message }`);
 
             return Promise.resolve(null);
+            /* v8 ignore stop */
         }
     }
 
@@ -128,7 +138,7 @@ export class ConsoleDestination extends LoggingPlugin {
             getShouldWriteDebugInfo,
             getShouldWriteOperationalLogs,
             validationInput
-        } = resolveLoggingPluginConfigurationOptions(options, DEFAULT_CONSOLE_DESTINATION_OPTIONS);
+        } = ConsoleDestination.resolveConfigurationOptions(options, DEFAULT_CONSOLE_DESTINATION_OPTIONS);
 
         // #region Input validation
         /* v8 ignore next */

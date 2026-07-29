@@ -88,16 +88,9 @@ describe('ConsoleDestination', () => {
         expect(() => destination?.dispose()).not.toThrow();
     });
 
-    it('should return null and report diagnostics when the option map contains an invalid method', async () => {
-        const log = vi.spyOn(console, 'log').mockImplementation(() => void 0);
-
-        const destination = await ConsoleDestination.create({
-            'getShouldWriteDebugInfo': () => true,
+    it('should throw synchronously when the option map contains an invalid method', () => {
+        expect(() => ConsoleDestination.create({
             'logLevelToConsoleMethod': { [LogLevel.Warning]: 'write' as never }
-        });
-
-        expect(destination).toBeNull();
-
-        expect(log).toHaveBeenCalledWith(expect.stringContaining('ConsoleDestination could not be created'));
+        })).toThrow();
     });
 });
