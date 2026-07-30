@@ -80,7 +80,7 @@ jobs:
       # validate:package:skip-reachability command so workflow validation does not modify its checkout.
       - name: Install Socket CLI
         background: true
-        run: sfw pip install socketsecurity==2.5.5 uv --upgrade
+        run: sfw pip install socketsecurity==2.5.6 uv --upgrade
 
       # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
       - name: Steps - Convert Back To Synchronous Execution - Packages Updates/Setup
