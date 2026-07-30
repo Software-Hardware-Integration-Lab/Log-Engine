@@ -1,0 +1,124 @@
+# Display Name of the workflow
+name: Build - Production
+
+# Event listeners for when the job should start execution
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # Run the build checks on every change
+  push:
+    branches: [main]
+
+  # Allow this workflow to be called from another workflow
+  workflow_call:
+    inputs:
+      correlationId:
+        description: 'Correlates the origin job with the child instance since process start does not return an ID.'
+        type: string
+        required: false
+    outputs:
+      channel:
+        description: 'The channel that the build should be published to.'
+        value: ${{ jobs.Metadata.outputs.channel }}
+      packageName:
+        description: 'The name of the generated NPM package.'
+        value: ${{ jobs.Build-Prod.outputs.packageName }}
+
+# Define each session of execution that should be executed
+jobs:
+  # Execution session that calculates the metadata for the build and makes it available to downstream jobs through outputs
+  Metadata:
+    # Human friendly name of the job
+    name: Calculate - Metadata
+
+    # Grant the required permissions to run the job
+    permissions:
+      contents: read
+
+    # Execute the workflow
+    uses: ./.github/workflows/Metadata.yml
+
+  # Execution session that builds the artifacts that are used for deployment
+  Build-Prod:
+    # Display name of the job
+    name: Build - Log Engine
+
+    # Configures the filter for which operating system that should be used when selecting runners
+    runs-on: ubuntu-latest
+
+    # Ensure dependant jobs have completed before running this job
+    needs: [Metadata]
+
+    # Sets the scopes available to the github_token injected to the GH Actions runner
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+
+    # Content that can be reused across multiple workflows to avoid duplication of code and logic
+    outputs:
+      packageName: ${{ steps.generate-package.outputs.package-file }}
+
+    # Set of steps to execute to build and capture the static HTML
+    steps:
+      # Used to uniquely identify the specific call to correlate the calling entity with the cross repo build
+      - name: ${{ inputs.correlationId || 'No correlation ID' }}
+        id: correlationId
+        run: echo run identifier "${{ inputs.correlationId || 'No correlation ID' }}"
+        background: true
+
+      # Checkout is required before using local composite actions from this repository.
+      - name: Checkout Files from Repo
+        background: true
+        uses: actions/checkout@v7
+
+      # Prepare runner environment shared across CI workflows.
+      - name: Setup CI Environment
+        uses: ./.github/actions/setup-ci
+        background: true
+        with:
+          updateNpm: 'true'
+
+      # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
+      - name: Steps - Convert Back To Synchronous Execution - Environment Setup
+        wait-all: true
+
+      # Cryptographically attest that packages haven't been tampered where supported
+      - name: Attest Dependency Provenance
+        run: npm audit signatures
+
+      # Update the version of SHIELD being uploaded to have a different version number to avoid SDG version conflict
+      - name: Tattoo Version - Experimental Channel
+        if: ${{ needs.Metadata.outputs.channel != 'stable' }}
+        run: npm version --no-commit-hooks --no-git-tag-version "${{ needs.Metadata.outputs.version }}-${{ needs.Metadata.outputs.channel }}.${{ needs.Metadata.outputs.shortSha }}"
+
+      # Validate package integrity before publishing (tests, coverage, and production build).
+      - name: Validate Package Before Publish
+        run: npm run validate:package
+
+      # Generate the package archive that will be attested and published to each registry.
+      - name: Generate NPM Package Archive
+        id: generate-package
+        run: echo "package-file=$(npm pack --ignore-scripts)" >> "$GITHUB_OUTPUT"
+
+      # Create an attestation for the package archive to ensure integrity and authenticity.
+      - name: Attest NPM Package Archive
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ steps.generate-package.outputs.package-file }}
+
+      # Publish the attested package archive to GitHub Packages for internal distribution.
+      - name: Upload Package to GitHub Packages Registry
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish ${{ steps.generate-package.outputs.package-file }} --tag ${{ needs.Metadata.outputs.channel }} --ignore-scripts
+
+      # Upload the attested npm package archive for the publish workflow to consume.
+      - name: Upload NPM Package Archive Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: NPM-Package
+          if-no-files-found: error
+          path: ${{ steps.generate-package.outputs.package-file }}

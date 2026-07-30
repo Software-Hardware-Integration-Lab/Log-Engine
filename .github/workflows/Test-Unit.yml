@@ -1,0 +1,67 @@
+# Display Name of the workflow
+name: Dynamic Analysis - Unit Test
+
+# When this workflow triggers
+on:
+  # Run the unit tests on every change
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # Allows you to run this workflow from other workflows as a library/unit of reusable code
+  workflow_call:
+
+# Define each session of execution that should be executed
+jobs:
+  Test:
+    # Display name of the job
+    name: Code Unit Test
+
+    # Operating system filter for the runners
+    runs-on: ubuntu-latest
+
+    # Sets the scopes available to the github_token injected to the GH Actions runner
+    permissions:
+      contents: read
+      pull-requests: write
+
+    # Set of execution steps to perform
+    steps:
+      # Checkout is required before using local composite actions from this repository.
+      - name: Download Source Code
+        uses: actions/checkout@v7
+
+      # Prepare runner environment shared across CI workflows.
+      - name: Setup CI Environment
+        uses: ./.github/actions/setup-ci
+
+      # Build the project, run the unit tests, and print the coverage report into the check log
+      - name: Run the Unit Tests With Coverage
+        shell: bash
+        run: |
+          npm run coverage 2>&1 | tee coverage-output.txt
+
+      # Promote the coverage summary into the GitHub Actions job summary for easier PR review
+      - name: Publish Coverage Summary
+        run: node ./scripts/publish-coverage-summary.mjs
+
+      # Create or update one coverage comment for pull request runs.
+      - name: Publish Coverage Report to Pull Request
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        uses: actions/github-script@v8
+        env:
+          COVERAGE_SUMMARY_FILE: coverage-summary.md
+        with:
+          script: |
+            const { pathToFileURL } = require('node:url');
+            const commentScriptUrl = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/publish-coverage-comment.mjs`);
+            const { default: publishCoverageComment } = await import(commentScriptUrl.href);
+            await publishCoverageComment({
+              github,
+              context,
+              summaryPath: process.env.COVERAGE_SUMMARY_FILE,
+            });

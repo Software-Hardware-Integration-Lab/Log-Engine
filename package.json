@@ -1,0 +1,73 @@
+{
+    "version": "0.0.3",
+    "name": "@software-hardware-integration-lab/log-engine",
+    "description": "Logging engine with ability to add plugins for any destination",
+    "author": "Michael Howard",
+    "type": "module",
+    "scripts": {
+        "build": "npm run clean:bin && tspc -p tsconfig.json",
+        "build:coverage": "npm run clean:bin && tspc -p coverage.tsconfig.json",
+        "build:prod": "npm run clean:bin && tspc -p prod.tsconfig.json",
+        "clean:bin": "node ./scripts/clean-bin.mjs",
+        "lint": "eslint",
+        "lint:fix": "eslint --fix",
+        "test": "npm run build:coverage && vitest run",
+        "test:watch": "vitest",
+        "coverage": "npm run build:coverage && vitest run --coverage",
+        "validate:package": "npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.mjs",
+        "prepack": "npm run validate:package",
+        "postinstall": "ts-patch install -s"
+    },
+    "imports": {
+        "#/*": {
+            "types": "./src/*",
+            "default": "./bin/*"
+        }
+    },
+    "exports": {
+        ".": {
+            "types": "./bin/index.d.ts",
+            "import": "./bin/index.js"
+        }
+    },
+    "types": "./bin/index.d.ts",
+    "files": [
+        "bin",
+        "README.md",
+        "LICENSE"
+    ],
+    "engines": {
+        "node": ">=22"
+    },
+    "dependencies": {
+        "typia": "~12.1.1"
+    },
+    "devDependencies": {
+        "@software-hardware-integration-lab/development-utilities": "~3.0.0",
+        "@types/node": "~26.1.1",
+        "@vitest/coverage-v8": "~4.1.10",
+        "ts-patch": "~4.0.1",
+        "typescript": "~6.0.3",
+        "vitest": "~4.1.10"
+    },
+    "overrides": {
+        "function-bind": "npm:@socketregistry/function-bind@^1",
+        "hasown": "npm:@socketregistry/hasown@^1",
+        "is-core-module": "npm:@socketregistry/is-core-module@^1",
+        "is-interactive": "npm:@socketregistry/is-interactive@^1",
+        "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@^1",
+        "path-parse": "npm:@socketregistry/path-parse@^1",
+        "safe-buffer": "npm:@socketregistry/safe-buffer@^1",
+        "safer-buffer": "npm:@socketregistry/safer-buffer@^1"
+    },
+    "resolutions": {
+        "function-bind": "npm:@socketregistry/function-bind@^1",
+        "hasown": "npm:@socketregistry/hasown@^1",
+        "is-core-module": "npm:@socketregistry/is-core-module@^1",
+        "is-interactive": "npm:@socketregistry/is-interactive@^1",
+        "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@^1",
+        "path-parse": "npm:@socketregistry/path-parse@^1",
+        "safe-buffer": "npm:@socketregistry/safe-buffer@^1",
+        "safer-buffer": "npm:@socketregistry/safer-buffer@^1"
+    }
+}
