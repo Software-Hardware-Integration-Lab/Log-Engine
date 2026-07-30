@@ -51,7 +51,6 @@ jobs:
         background: true
         with:
           node-version: 24
-          scope: software-hardware-integration-lab
 
       # Download the compiled server binary
       - name: Download Artifact From Build Job
