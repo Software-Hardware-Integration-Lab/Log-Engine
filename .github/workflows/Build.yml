@@ -114,7 +114,9 @@ jobs:
       - name: Upload Package to GitHub Packages Registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish ${{ steps.generate-package.outputs.package-file }} --registry=https://npm.pkg.github.com --tag ${{ needs.Metadata.outputs.channel }} --ignore-scripts
+        run: |
+          npm config set //npm.pkg.github.com/:_authToken "$NODE_AUTH_TOKEN"
+          npm publish ${{ steps.generate-package.outputs.package-file }} --registry=https://npm.pkg.github.com --tag ${{ needs.Metadata.outputs.channel }} --ignore-scripts
 
       # Upload the attested npm package archive for the publish workflow to consume.
       - name: Upload NPM Package Archive Artifact
