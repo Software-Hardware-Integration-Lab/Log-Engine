@@ -70,8 +70,9 @@ jobs:
         background: true
 
       # Checkout is required before using local composite actions from this repository.
+      # Runs synchronously (not background) since the local setup-ci action below
+      # reads action.yml from the checked-out working tree and must not start until this completes.
       - name: Checkout Files from Repo
-        background: true
         uses: actions/checkout@v7
 
       # Prepare runner environment shared across CI workflows.
