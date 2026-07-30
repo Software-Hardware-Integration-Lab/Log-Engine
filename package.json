@@ -14,7 +14,9 @@
         "test": "npm run build:coverage && vitest run",
         "test:watch": "vitest",
         "coverage": "npm run build:coverage && vitest run --coverage",
-        "validate:package": "npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.mjs",
+        "validate:package": "npm run update:reachability-pin && npm run validate:package:skip-reachability",
+        "validate:package:skip-reachability": "npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.mjs",
+        "update:reachability-pin": "node ./scripts/update-reachability-pin.mjs",
         "prepack": "npm run validate:package",
         "postinstall": "ts-patch install -s"
     },

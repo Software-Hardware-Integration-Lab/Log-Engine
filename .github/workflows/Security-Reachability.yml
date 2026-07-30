@@ -75,23 +75,9 @@ jobs:
         run: sfw npm install -g npm
 
       # Install the Socket CLI tool using pip and ensure it's up to date.
-      # socketsecurity is pinned rather than left on --upgrade because brand-new releases can
-      # pull in an equally brand-new @coana-tech/cli version that is still within Socket's own
-      # package-age cooldown window, causing npm ETARGET failures until it ages out. Bump this
-      # pin manually once a release is confirmed to work.
-      #
-      # To check whether a newer socketsecurity release is safe to bump to:
-      #   1. Check the candidate version's publish date: https://pypi.org/project/socketsecurity/#history
-      #      (or `pip index versions socketsecurity`). It should be at least ~24-48h old so any
-      #      npm dependency it pulls in has had time to clear Socket's package-age cooldown.
-      #   2. Run `pip download --no-deps socketsecurity==<version> -d /tmp/check && tar tzf /tmp/check/*.tar.gz`
-      #      (or inspect the sdist/wheel metadata) to find the @coana-tech/cli version it requires,
-      #      then confirm that version's publish date on https://www.npmjs.com/package/@coana-tech/cli
-      #      is also old enough (again, at least ~24-48h before the date you plan to run CI).
-      #   3. If both dates check out, bump the pin below and watch the next scan run succeed.
-      #   4. If the workflow starts failing with the same ETARGET/notarget error again, it means a
-      #      new socketsecurity release again pulled in a too-fresh @coana-tech/cli - re-pin to the
-      #      last known-good version and retry later.
+      # The local validate:package command maintains this pin using the latest non-yanked stable
+      # release that has been available on PyPI for at least 24 hours. CI runs the corresponding
+      # validate:package:skip-reachability command so workflow validation does not modify its checkout.
       - name: Install Socket CLI
         background: true
         run: sfw pip install socketsecurity==2.5.5 uv --upgrade

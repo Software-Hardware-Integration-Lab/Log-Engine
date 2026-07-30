@@ -97,7 +97,7 @@ jobs:
 
       # Validate package integrity before publishing (tests, coverage, and production build).
       - name: Validate Package Before Publish
-        run: npm run validate:package
+        run: npm run validate:package:skip-reachability
 
       # Generate the package archive that will be attested and published to both registries.
       - name: Generate NPM Package Archive
