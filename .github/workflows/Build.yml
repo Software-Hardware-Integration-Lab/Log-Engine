@@ -99,7 +99,7 @@ jobs:
       - name: Validate Package Before Publish
         run: npm run validate:package
 
-      # Generate the package archive that will be attested and published to each registry.
+      # Generate the package archive that will be attested and published to both registries.
       - name: Generate NPM Package Archive
         id: generate-package
         run: echo "package-file=$(npm pack --ignore-scripts)" >> "$GITHUB_OUTPUT"
@@ -110,11 +110,11 @@ jobs:
         with:
           subject-path: ${{ steps.generate-package.outputs.package-file }}
 
-      # Publish the attested package archive to GitHub Packages for internal distribution.
+      # Publish the attested package to GitHub Packages without changing the npmjs install registry.
       - name: Upload Package to GitHub Packages Registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish ${{ steps.generate-package.outputs.package-file }} --tag ${{ needs.Metadata.outputs.channel }} --ignore-scripts
+        run: npm publish ${{ steps.generate-package.outputs.package-file }} --registry=https://npm.pkg.github.com --tag ${{ needs.Metadata.outputs.channel }} --ignore-scripts
 
       # Upload the attested npm package archive for the publish workflow to consume.
       - name: Upload NPM Package Archive Artifact
