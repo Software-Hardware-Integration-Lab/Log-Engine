@@ -1,8 +1,12 @@
 {
-    "version": "0.0.3-beta1",
+    "version": "0.0.3-beta2",
     "name": "@software-hardware-integration-lab/log-engine",
     "description": "Logging engine with ability to add plugins for any destination",
     "author": "Michael Howard",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Software-Hardware-Integration-Lab/LogEngine.git"
+    },
     "type": "module",
     "scripts": {
         "build": "npm run clean:bin && tspc -p tsconfig.json",
