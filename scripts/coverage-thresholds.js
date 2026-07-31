@@ -1,3 +1,4 @@
+/** Specifies the minimum acceptable coverage percentages. */
 export const coverageThresholds = {
     'branches': 85,
     'functions': 99,

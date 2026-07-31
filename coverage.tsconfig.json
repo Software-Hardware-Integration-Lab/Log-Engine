@@ -1,6 +1,8 @@
 {
+    // Extends the production config to ensure we are testing what users are receiving in the published package.
     "extends": "./prod.tsconfig.json",
     "compilerOptions": {
+        // Source map is required to generate coverage reports that map back to the original TypeScript source files.
         "sourceMap": true
     }
 }

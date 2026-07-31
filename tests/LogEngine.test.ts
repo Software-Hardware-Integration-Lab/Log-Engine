@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LogEngine } from '#/LogEngine.js';
 import { LogLevel, type AuditLog, type OperationalLog } from '#/interfaces/LogEngine.js';
 import type { LoggingPluginContract } from '#/interfaces/plugins/LoggingPlugin.js';
-import { UUID_EMPTY } from '../src/helpers/Constants';
+import { UUID_EMPTY } from '../src/helpers/Constants.js';
 
 const uuid = '00000000-0000-0000-0000-000000000001';
 

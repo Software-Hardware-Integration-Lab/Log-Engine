@@ -1,8 +1,12 @@
 {
     "compilerOptions": {
+        // Source maps are useful while debugging, but are not part of the published runtime package.
         "sourceMap": false,
+        // Declaration maps would reference unpublished TypeScript source files.
         "declarationMap": false,
+        // Preserve license and diagnostic comments in the production JavaScript output.
         "removeComments": false,
+        // Override declaration-only builds so npm consumers receive executable JavaScript.
         "emitDeclarationOnly": false
     },
     "extends": "./tsconfig.json"

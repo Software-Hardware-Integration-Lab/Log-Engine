@@ -1,58 +1,26 @@
 {
+    "extends": "@software-hardware-integration-lab/development-utilities/config/typescript/base.json",
     // Visit https://aka.ms/tsconfig to read more about this file
     "compilerOptions": {
-        // File Layout
-        // "rootDir": "./src",
-        // "outDir": "./dist",
-        // Environment Settings
-        // See also https://aka.ms/tsconfig/module
-        "module": "nodenext",
-        "target": "es2024",
-        "moduleResolution": "nodenext",
+        "types": [
+            "node"
+        ],
         "paths": {
             "#/*": [
                 "./src/*"
             ]
         },
+        // Required for tests
+        "rootDir": "./src",
+        "outDir": "./bin",
+        "declaration": true,
         "plugins": [
             {
                 "transform": "typia/lib/transform"
             }
-        ],
-        "types": [
-            "node"
-        ],
-        "rootDir": "./src",
-        "outDir": "./bin",
-        // For nodejs:
-        // "lib": ["esnext"],
-        // "types": ["node"],
-        // and npm install -D @types/node
-        // Other Outputs
-        "sourceMap": true,
-        "declaration": true,
-        "declarationMap": true,
-        // Stricter Typechecking Options
-        "noUncheckedIndexedAccess": true,
-        "exactOptionalPropertyTypes": false,
-        // Style Options
-        // "noImplicitReturns": true,
-        // "noImplicitOverride": true,
-        // "noUnusedLocals": true,
-        // "noUnusedParameters": true,
-        // "noFallthroughCasesInSwitch": true,
-        // "noPropertyAccessFromIndexSignature": true,
-        // Recommended Options
-        "strict": true,
-        "verbatimModuleSyntax": true,
-        "isolatedModules": true,
-        "noUncheckedSideEffectImports": true,
-        "moduleDetection": "force",
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "noImplicitOverride": true
+        ]
     },
+    // Include all TypeScript files in the src directory and its subdirectories
     "include": [
         "src/**/*.ts"
     ]

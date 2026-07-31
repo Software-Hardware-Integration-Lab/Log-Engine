@@ -8,28 +8,6 @@ LogEngine is a Node.js logging library with a singleton log engine and pluggable
 npm install @software-hardware-integration-lab/log-engine
 ```
 
-## Tooling Decisions
-
-This package publishes JavaScript and declaration files. TypeScript, `ttsc`, and the related validation tooling are development dependencies; consumers do not execute this build toolchain.
-
-### TypeScript 7
-
-The project uses TypeScript 7 for its native compiler, faster builds, lower build-memory use, and improved editor responsiveness. Its generated JavaScript and declaration files remain covered by the normal test, coverage, and package-validation workflow before publishing.
-
-TypeScript 7.0 does not provide the JavaScript compiler API used by type-aware ESLint tooling. This project does not include ESLint while that API is unavailable; `ttsc` provides type checking and Vitest provides behavioral validation.
-
-### `ttsc` Instead of `ts-patch`
-
-The project uses `ttsc` as the TypeScript-Go compiler and Typia plugin host. It runs the same project configuration as `tsc` while supporting Typia's native source transformation.
-
-`ts-patch` targets the JavaScript TypeScript compiler by patching or live-routing its compiler entry points. Its TypeScript-Go compatibility is explicitly a separate evaluation track. `ttsc` is the supported choice for the TypeScript 7 compiler and avoids modifying installed compiler files.
-
-### Typia 13
-
-The project uses Typia 13 because it is the maintained release line for the TypeScript-Go toolchain. Typia 13 requires `ttsc` for compilation and transforms its validation calls into generated runtime checks during the build.
-
-Typia 12.1.1 is the final release line for the JavaScript TypeScript compiler and supports TypeScript versions below 7. It has no published long-term-support or security-backport commitment, so the project does not treat it as a supported foundation for a new toolchain.
-
 ## Initialize the engine
 
 Configure the host before obtaining the singleton or adding plugins. The `getRequestMetadata` callback is evaluated for every log entry. It should return the identifiers associated with the current operation; when it returns `undefined`, LogEngine uses all-zero UUID placeholders for correlationId/requestId/userId.
@@ -211,4 +189,4 @@ await logEngine.addPlugin(LogAnalyticsDestination, {
 
 The configured streams must accept the destination payloads: audit records include `After`, `Before`, `Category`, `CorrelationId`, `Message`, `ShieldTenantId`, `TimeGenerated`, and `UserId`; operational records include `AdditionalContext`, `CorrelationId`, `Level`, `Message`, `ShieldTenantId`, `Stack`, `TimeGenerated`, and `UserId`.
 
-For settings that can change at runtime, provide `getRuleId`, `getIngestionEndpoint`, `getStreamName`, and an `uploaderFactory` instead of static values. This is the approach used by SHIELD's Log Analytics host adapter: it keeps Azure credentials, clients, and mutable settings in application code while supplying the destination a small uploader contract.
+For settings that can change at runtime, provide `getRuleId`, `getIngestionEndpoint`, `getStreamName`, and an `uploaderFactory` alongside the required fallback `ruleId`, `streamName`, and `uploader` values. The runtime hooks take precedence when supplied. This is the approach used by SHIELD's Log Analytics host adapter: it keeps Azure credentials, clients, and mutable settings in application code while supplying the destination a small uploader contract.

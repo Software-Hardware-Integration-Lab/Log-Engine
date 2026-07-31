@@ -14,7 +14,6 @@
         "build:prod": "npm run clean:bin && tspc -p prod.tsconfig.json",
         "clean:bin": "node ./scripts/clean-bin.mjs",
         "lint": "eslint",
-        "lint:fix": "eslint --fix",
         "test": "npm run build:coverage && vitest run",
         "test:watch": "vitest",
         "coverage": "npm run build:coverage && vitest run --coverage",
@@ -57,8 +56,6 @@
         "vitest": "~4.1.10"
     },
     "overrides": {
-        "function-bind": "npm:@socketregistry/function-bind@^1",
-        "hasown": "npm:@socketregistry/hasown@^1",
         "is-core-module": "npm:@socketregistry/is-core-module@^1",
         "is-interactive": "npm:@socketregistry/is-interactive@^1",
         "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@^1",
@@ -67,8 +64,6 @@
         "safer-buffer": "npm:@socketregistry/safer-buffer@^1"
     },
     "resolutions": {
-        "function-bind": "npm:@socketregistry/function-bind@^1",
-        "hasown": "npm:@socketregistry/hasown@^1",
         "is-core-module": "npm:@socketregistry/is-core-module@^1",
         "is-interactive": "npm:@socketregistry/is-interactive@^1",
         "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@^1",
