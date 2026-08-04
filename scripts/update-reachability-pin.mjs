@@ -41,8 +41,8 @@ if (!response.ok) {
 const { releases } = await response.json();
 /** Gets the latest timestamp at which a release is eligible. */
 const cutoffTime = Date.now() - RELEASE_AGE_MILLISECONDS;
-/** Gets the newest non-yanked stable release old enough to use. */
-const eligibleRelease = Object.entries(releases)
+/** Gets the newest non-yanked stable releases old enough to use. */
+const eligibleReleases = Object.entries(releases)
     .filter(([version, files]) => versionPattern.test(version) && Array.isArray(files) && files.length > 0 && files.every((file) => !file.yanked))
     .map(([version, files]) => {
     /** Gets the most recent upload time for the release. */
@@ -55,7 +55,7 @@ const eligibleRelease = Object.entries(releases)
     .filter(({ mostRecentUpload }) => Number.isFinite(mostRecentUpload) && mostRecentUpload <= cutoffTime)
     .sort((left, right) => compareVersions(right.version, left.version));
 /** Gets the newest eligible release. */
-const [latestEligibleRelease] = eligibleRelease;
+const [latestEligibleRelease] = eligibleReleases;
 if (!latestEligibleRelease) {
     throw new Error('PyPI did not return a non-yanked stable socketsecurity release at least 24 hours old.');
 }
