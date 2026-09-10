@@ -1,8 +1,11 @@
 {
-    "version": "0.0.3-beta3",
+    "version": "0.0.3",
     "name": "@software-hardware-integration-lab/log-engine",
     "description": "Logging engine with ability to add plugins for any destination",
-    "author": "Michael Howard",
+    "author": {
+        "name": "Michael Howard",
+        "email": "Michael_Howard@SHI.com"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Software-Hardware-Integration-Lab/LogEngine.git"
@@ -23,39 +26,32 @@
         "prepack": "npm run validate:package",
         "postinstall": "ts-patch install -s"
     },
-    "imports": {
-        "#/*": {
-            "types": "./src/*",
-            "default": "./bin/*"
+    "packageManager": "npm@12.0.2",
+    "devEngines": {
+        "runtime": {
+            "name": "node",
+            "version": ">=24.20.0",
+            "onFail": "error"
+        },
+        "packageManager": {
+            "name": "npm",
+            "onFail": "error"
         }
-    },
-    "exports": {
-        ".": {
-            "types": "./bin/index.d.ts",
-            "import": "./bin/index.js"
-        }
-    },
-    "types": "./bin/index.d.ts",
-    "files": [
-        "bin",
-        "README.md",
-        "LICENSE"
-    ],
-    "engines": {
-        "node": ">=22"
     },
     "dependencies": {
         "typia": "~12.1.1"
     },
     "devDependencies": {
         "@software-hardware-integration-lab/development-utilities": "~3.0.0",
-        "@types/node": "~26.1.1",
-        "@vitest/coverage-v8": "~4.1.10",
+        "@types/node": "~26.5.0",
+        "@vitest/coverage-v8": "~5.0.0",
         "ts-patch": "~4.0.1",
         "typescript": "~6.0.3",
-        "vitest": "~4.1.10"
+        "vitest": "~5.0.0"
     },
     "overrides": {
+        "function-bind": "npm:@socketregistry/function-bind@^1",
+        "hasown": "npm:@socketregistry/hasown@^1",
         "is-core-module": "npm:@socketregistry/is-core-module@^1",
         "is-interactive": "npm:@socketregistry/is-interactive@^1",
         "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@^1",
@@ -64,6 +60,8 @@
         "safer-buffer": "npm:@socketregistry/safer-buffer@^1"
     },
     "resolutions": {
+        "function-bind": "npm:@socketregistry/function-bind@^1",
+        "hasown": "npm:@socketregistry/hasown@^1",
         "is-core-module": "npm:@socketregistry/is-core-module@^1",
         "is-interactive": "npm:@socketregistry/is-interactive@^1",
         "is-unicode-supported": "npm:@socketregistry/is-unicode-supported@^1",
