@@ -1,5 +1,20 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+
+/** Represents a release file returned by PyPI. */
+interface PyPiReleaseFile {
+    /** Gets the file upload time. */
+    'upload_time_iso_8601': string;
+    /** Indicates whether the file has been withdrawn. */
+    'yanked': boolean;
+}
+
+/** Represents the portion of the PyPI response consumed by this script. */
+interface PyPiResponse {
+    /** Gets release files indexed by version. */
+    'releases': Record<string, PyPiReleaseFile[]>;
+}
+
 /** Specifies the PyPI endpoint for socketsecurity releases. */
 const PYPI_URL = 'https://pypi.org/pypi/socketsecurity/json';
 /** Specifies the minimum release age before a version is eligible. */
@@ -16,7 +31,7 @@ const pinPattern = /socketsecurity==(?<version>\d+(?:\.\d+)*)/gu;
  * @param right Specifies the right version.
  * @returns A negative value, zero, or a positive value according to version ordering.
  */
-function compareVersions(left, right) {
+function compareVersions(left: string, right: string): number {
     /** Gets the numeric components of the left version. */
     const leftParts = left.split('.').map(Number);
     /** Gets the numeric components of the right version. */
@@ -35,23 +50,23 @@ function compareVersions(left, right) {
 /** Gets the PyPI response for socketsecurity releases. */
 const response = await fetch(PYPI_URL);
 if (!response.ok) {
-    throw new Error(`Unable to retrieve socketsecurity releases from PyPI: ${response.status} ${response.statusText}`);
+    throw new Error(`Unable to retrieve socketsecurity releases from PyPI: ${ response.status } ${ response.statusText }`);
 }
 /** Gets release files indexed by socketsecurity version. */
-const { releases } = await response.json();
+const { releases } = await response.json() as PyPiResponse;
 /** Gets the latest timestamp at which a release is eligible. */
 const cutoffTime = Date.now() - RELEASE_AGE_MILLISECONDS;
 /** Gets the newest non-yanked stable releases old enough to use. */
 const eligibleReleases = Object.entries(releases)
     .filter(([version, files]) => versionPattern.test(version) && Array.isArray(files) && files.length > 0 && files.every((file) => !file.yanked))
     .map(([version, files]) => {
-    /** Gets the most recent upload time for the release. */
-    const mostRecentUpload = Math.max(...files.map((file) => Date.parse(file.upload_time_iso_8601)));
-    return {
-        mostRecentUpload,
-        version
-    };
-})
+        /** Gets the most recent upload time for the release. */
+        const mostRecentUpload = Math.max(...files.map((file) => Date.parse(file.upload_time_iso_8601)));
+        return {
+            mostRecentUpload,
+            version
+        };
+    })
     .filter(({ mostRecentUpload }) => Number.isFinite(mostRecentUpload) && mostRecentUpload <= cutoffTime)
     .sort((left, right) => compareVersions(right.version, left.version));
 /** Gets the newest eligible release. */
@@ -64,19 +79,19 @@ const workflow = await readFile(workflowPath, 'utf8');
 /** Gets all socketsecurity pins in the workflow. */
 const pins = [...workflow.matchAll(pinPattern)];
 if (pins.length !== 1) {
-    throw new Error(`Expected exactly one socketsecurity pin in ${workflowPath}, found ${pins.length}.`);
+    throw new Error(`Expected exactly one socketsecurity pin in ${ workflowPath }, found ${ pins.length }.`);
 }
 /** Gets the socketsecurity version captured from the workflow pin. */
 const currentVersion = pins[0]?.groups?.['version'];
 if (!currentVersion) {
-    throw new Error(`Unable to extract the socketsecurity version from ${workflowPath}.`);
+    throw new Error(`Unable to extract the socketsecurity version from ${ workflowPath }.`);
 }
 if (currentVersion === latestEligibleRelease.version) {
-    process.stdout.write(`Reachability pin is current: socketsecurity==${currentVersion}\n`);
+    process.stdout.write(`Reachability pin is current: socketsecurity==${ currentVersion }\n`);
 }
 else {
     /** Gets the workflow content with the updated socketsecurity pin. */
-    const updatedWorkflow = workflow.replace(pinPattern, `socketsecurity==${latestEligibleRelease.version}`);
+    const updatedWorkflow = workflow.replace(pinPattern, `socketsecurity==${ latestEligibleRelease.version }`);
     await writeFile(workflowPath, updatedWorkflow);
-    process.stdout.write(`Updated reachability pin: socketsecurity==${currentVersion} -> socketsecurity==${latestEligibleRelease.version}\n`);
+    process.stdout.write(`Updated reachability pin: socketsecurity==${ currentVersion } -> socketsecurity==${ latestEligibleRelease.version }\n`);
 }
