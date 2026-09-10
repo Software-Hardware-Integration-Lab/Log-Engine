@@ -1,20 +1,12 @@
 export { LogEngine } from './LogEngine.js';
 
-export {
-    ConsoleDestination
-} from './plugins/ConsoleDestination.js';
+export { ConsoleDestination } from './plugins/ConsoleDestination.js';
 
-export {
-    FileDestination
-} from './plugins/FileDestination.js';
+export { FileDestination } from './plugins/FileDestination.js';
 
-export {
-    LogAnalyticsDestination
-} from './plugins/LogAnalyticsDestination.js';
+export { LogAnalyticsDestination } from './plugins/LogAnalyticsDestination.js';
 
-export {
-    LogLevel
-} from './interfaces/LogEngine.js';
+export { LogLevel } from './interfaces/LogEngine.js';
 
 export type {
     AuditLog,
@@ -48,6 +40,4 @@ export type {
     LogAnalyticsUploaderFactory
 } from './interfaces/plugins/LogAnalyticsDestination.js';
 
-export type {
-    LoggingPluginContract
-} from './interfaces/plugins/LoggingPlugin.js';
+export type { LoggingPluginContract } from './interfaces/plugins/LoggingPlugin.js';
