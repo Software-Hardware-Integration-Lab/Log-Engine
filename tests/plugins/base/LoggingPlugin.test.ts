@@ -4,6 +4,10 @@ import type { AuditLog, OperationalLog } from '#/interfaces/LogEngine.js';
 import type { LoggingPluginConfigurationOptions } from '#/interfaces/plugins/LoggingPlugin.js';
 
 class TestPlugin extends LoggingPlugin {
+    public override dispose(): void {
+        // intentional no-op
+    }
+
     public constructor(id = 'test-plugin') {
         super(id);
     }

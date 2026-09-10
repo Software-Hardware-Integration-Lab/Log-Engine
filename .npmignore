@@ -1,0 +1,27 @@
+# Project files: only built runtime files should be published
+/src
+/tests
+/coverage
+/scripts
+/.github
+/.vscode
+
+# Generated reports and local package artifacts
+coverage-output.txt
+coverage-summary.md
+*.tgz
+
+# Tooling and repository configuration
+*.code-workspace
+*tsconfig*.json
+eslint.config.mjs
+vitest.config.ts
+package-lock.json
+.npmrc
+
+# Dependencies and logs
+/node_modules
+*.log
+
+# Test artifacts that could be emitted into the build directory
+bin/test

@@ -45,19 +45,5 @@ export default defineConfig([
             ],
         }
     },
-    {
-        files: ['tests/**/*.ts'],
-        languageOptions: {
-            parserOptions: {
-                project: './vitest.tsconfig.json',
-                projectService: false
-            }
-        },
-        rules: {
-            '@typescript-eslint/no-confusing-void-expression': 'off',
-            '@typescript-eslint/no-deprecated': 'off',
-            '@typescript-eslint/no-empty-function': 'off'
-        }
-    },
     globalIgnores(['coverage/', 'scripts/', 'tests/', 'vitest.config.ts'])
 ])

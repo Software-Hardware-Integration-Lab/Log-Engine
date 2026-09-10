@@ -5,6 +5,11 @@
         }
     ],
     "settings": {
+        "files.associations": {
+            "*.tsconfig.json": "jsonc",
+            "coverage.tsconfig.json": "jsonc",
+            "prod.tsconfig.json": "jsonc"
+        },
         "files.exclude": {
             "node_modules": true
         },

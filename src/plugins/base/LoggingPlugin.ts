@@ -89,30 +89,30 @@ export abstract class LoggingPlugin implements LoggingPluginContract {
             : configuration;
 
         /** Optional caller-owned audit-write predicate preserved across option resolution. */
-        const getShouldWriteAuditLogs = typeof configurationObject?.getShouldWriteAuditLogs === 'function'
-            ? configurationObject.getShouldWriteAuditLogs as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteAuditLogs']>
+        const getShouldWriteAuditLogs = typeof configurationObject?.['getShouldWriteAuditLogs'] === 'function'
+            ? configurationObject['getShouldWriteAuditLogs'] as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteAuditLogs']>
             : defaultConfiguration.getShouldWriteAuditLogs;
 
         /** Optional caller-owned debug predicate preserved across option resolution. */
-        const getShouldWriteDebugInfo = typeof configurationObject?.getShouldWriteDebugInfo === 'function'
-            ? configurationObject.getShouldWriteDebugInfo as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteDebugInfo']>
+        const getShouldWriteDebugInfo = typeof configurationObject?.['getShouldWriteDebugInfo'] === 'function'
+            ? configurationObject['getShouldWriteDebugInfo'] as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteDebugInfo']>
             : defaultConfiguration.getShouldWriteDebugInfo;
 
         /** Optional caller-owned operational-write predicate preserved across option resolution. */
-        const getShouldWriteOperationalLogs = typeof configurationObject?.getShouldWriteOperationalLogs === 'function'
-            ? configurationObject.getShouldWriteOperationalLogs as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteOperationalLogs']>
+        const getShouldWriteOperationalLogs = typeof configurationObject?.['getShouldWriteOperationalLogs'] === 'function'
+            ? configurationObject['getShouldWriteOperationalLogs'] as NonNullable<LoggingPluginConfigurationOptions['getShouldWriteOperationalLogs']>
             : defaultConfiguration.getShouldWriteOperationalLogs;
 
-        if (configurationObject && typeof configurationObject.getShouldWriteAuditLogs === 'function') {
-            (validationInput as Record<string, unknown>).getShouldWriteAuditLogs = void 0;
+        if (configurationObject && typeof configurationObject['getShouldWriteAuditLogs'] === 'function') {
+            (validationInput as Record<string, unknown>)['getShouldWriteAuditLogs'] = void 0;
         }
 
-        if (configurationObject && typeof configurationObject.getShouldWriteDebugInfo === 'function') {
-            (validationInput as Record<string, unknown>).getShouldWriteDebugInfo = void 0;
+        if (configurationObject && typeof configurationObject['getShouldWriteDebugInfo'] === 'function') {
+            (validationInput as Record<string, unknown>)['getShouldWriteDebugInfo'] = void 0;
         }
 
-        if (configurationObject && typeof configurationObject.getShouldWriteOperationalLogs === 'function') {
-            (validationInput as Record<string, unknown>).getShouldWriteOperationalLogs = void 0;
+        if (configurationObject && typeof configurationObject['getShouldWriteOperationalLogs'] === 'function') {
+            (validationInput as Record<string, unknown>)['getShouldWriteOperationalLogs'] = void 0;
         }
 
         return {
