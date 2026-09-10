@@ -1,5 +1,5 @@
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
-import { coverageThresholds } from './coverage-thresholds.js';
+import { coverageThresholds } from './coverage-thresholds.ts';
 /** Specifies the source coverage summary path. */
 const coverageSummaryPath = 'coverage/coverage-summary.json';
 /** Specifies the generated Markdown summary path. */
