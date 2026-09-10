@@ -10,6 +10,12 @@
         "type": "git",
         "url": "git+https://github.com/Software-Hardware-Integration-Lab/LogEngine.git"
     },
+    "exports": {
+        ".": {
+            "types": "./bin/index.d.ts",
+            "import": "./bin/index.js"
+        }
+    },
     "type": "module",
     "scripts": {
         "build": "npm run clean:bin && tspc -p tsconfig.json",
