@@ -138,12 +138,6 @@ describe('AzureStorageDestination', () => {
         await expect(AzureStorageDestination.create({} as ContainerClient)).rejects.toThrow('operationalLogContainer');
         await expect(AzureStorageDestination.create(void 0, {} as ContainerClient)).rejects.toThrow('auditLogContainer');
         await expect(AzureStorageDestination.create(operationalContainer.container, void 0, {
-            'getShouldWriteOperationalLogs': () => false
-        })).rejects.toThrow('Operational logs are disabled');
-        await expect(AzureStorageDestination.create(void 0, operationalContainer.container, {
-            'getShouldWriteAuditLogs': () => false
-        })).rejects.toThrow('Audit logs are disabled');
-        await expect(AzureStorageDestination.create(operationalContainer.container, void 0, {
             'maxAppendBlockBytes': 0 as never
         })).rejects.toThrow();
     });

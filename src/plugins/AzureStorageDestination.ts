@@ -73,10 +73,6 @@ export class AzureStorageDestination extends LoggingPlugin {
         const resolvedOptions = AzureStorageDestination.#resolveConfigurationOptions(configuration);
 
         if (operationalLogContainer) {
-            if (resolvedOptions.getShouldWriteOperationalLogs && !resolvedOptions.getShouldWriteOperationalLogs()) {
-                throw new Error('Operational logs are disabled by configuration but an operational log container was provided.');
-            }
-
             try {
                 await operationalLogContainer.createIfNotExists();
             } catch (error: unknown) {
@@ -91,10 +87,6 @@ export class AzureStorageDestination extends LoggingPlugin {
         }
 
         if (auditLogContainer) {
-            if (resolvedOptions.getShouldWriteAuditLogs && !resolvedOptions.getShouldWriteAuditLogs()) {
-                throw new Error('Audit logs are disabled by configuration but an audit log container was provided.');
-            }
-
             try {
                 await auditLogContainer.createIfNotExists();
             } catch (error: unknown) {
