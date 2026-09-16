@@ -434,18 +434,6 @@ export class AzureStorageDestination extends LoggingPlugin {
         };
     }
 
-    static #shouldCreateNewBlob(currentActiveDate?: number): {
-        'shouldCreate': boolean,
-        'activeHour': number;
-    } {
-        const activeHour = new Date().setUTCMinutes(0, 0, 0);
-
-        return {
-            activeHour,
-            'shouldCreate': currentActiveDate === void 0 || activeHour > currentActiveDate
-        };
-    }
-
     #writeDebugLog(message: string, ...optionalParams: unknown[]): void {
         if (
             this.#appliedOptions.getShouldWriteDebugInfo &&
