@@ -1,16 +1,15 @@
 import type { OperationalLog, AuditLog } from '#/interfaces/LogEngine.js';
-import type { AppendBlobClient, ContainerClient } from '@azure/storage-blob';
 import { LoggingPlugin } from './base/LoggingPlugin.js';
-import { DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS, type AzureStorageDestinationOptions, type ResolvedAzureStorageDestinationOptions } from '#/interfaces/plugins/AzureStorageDestination.js';
+import { DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS, type AzureAppendBlobClientLike, type AzureBlobContainerLike, type AzureStorageDestinationOptions, type ResolvedAzureStorageDestinationOptions } from '#/interfaces/plugins/AzureStorageDestination.js';
 import { SerializableAuditLog } from '#/classes/SerializableAuditLog.js';
 import { SerializableOperationalLog } from '#/classes/SerializableOperationalLog.js';
 import { assertGuardEquals } from 'typia';
 
 interface LogTypeCollection {
-    'activeBlob': AppendBlobClient | undefined;
+    'activeBlob': AzureAppendBlobClientLike | undefined;
     'appendQueue': Promise<void>;
     'activeBlobDate': number | undefined;
-    'blobContainer': ContainerClient | undefined;
+    'blobContainer': AzureBlobContainerLike | undefined;
 }
 
 /**
@@ -24,8 +23,8 @@ export class AzureStorageDestination extends LoggingPlugin {
     #isDisposed = false;
 
     private constructor(
-        operationalLogContainer?: ContainerClient,
-        auditLogContainer?: ContainerClient,
+        operationalLogContainer?: AzureBlobContainerLike,
+        auditLogContainer?: AzureBlobContainerLike,
         configuration: AzureStorageDestinationOptions = DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS
     ) {
         super(configuration.id ?? 'AzureStorageDestination');
@@ -55,8 +54,8 @@ export class AzureStorageDestination extends LoggingPlugin {
      * @returns Initialized Azure Storage destination.
      */
     public static async create(
-        operationalLogContainer?: ContainerClient,
-        auditLogContainer?: ContainerClient,
+        operationalLogContainer?: AzureBlobContainerLike,
+        auditLogContainer?: AzureBlobContainerLike,
         configuration: AzureStorageDestinationOptions = DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS
     ): Promise<AzureStorageDestination> {
         if (!operationalLogContainer && !auditLogContainer) {
@@ -246,7 +245,7 @@ export class AzureStorageDestination extends LoggingPlugin {
         return appendOperation;
     }
 
-    async #createNewBlob(type: 'audit' | 'operational', activeHour: number): Promise<AppendBlobClient | undefined> {
+    async #createNewBlob(type: 'audit' | 'operational', activeHour: number): Promise<AzureAppendBlobClientLike | undefined> {
         const activeHourDate = new Date(activeHour);
 
         // Format the blob name based on the current hour
@@ -275,7 +274,7 @@ export class AzureStorageDestination extends LoggingPlugin {
         return blobClient;
     }
 
-    static #isContainerClient(value: unknown): value is ContainerClient {
+    static #isContainerClient(value: unknown): value is AzureBlobContainerLike {
         return typeof value === 'object' &&
             value !== null &&
             typeof (value as { 'createIfNotExists'?: unknown; }).createIfNotExists === 'function' &&
