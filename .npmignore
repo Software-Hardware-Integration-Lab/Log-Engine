@@ -18,6 +18,7 @@ eslint.config.mjs
 vitest.config.ts
 package-lock.json
 .npmrc
+.gitattributes
 
 # Dependencies and logs
 /node_modules

@@ -1,4 +1,17 @@
 import { spawnSync } from 'node:child_process';
+
+/** Represents the package metadata produced by npm pack. */
+interface PackageEntry {
+    /** Gets files included in the package tarball. */
+    'files'?: {
+        /** Gets the file path inside the tarball. */
+        'path': string;
+    }[];
+}
+
+/** Represents supported npm pack JSON response shapes. */
+type PackageMetadata = PackageEntry[] | Record<string, PackageEntry>;
+
 /** Indicates whether the script is running on Windows. */
 const isWindows = process.platform === 'win32';
 /** Gets the executable used to invoke npm. */
@@ -20,7 +33,7 @@ if (packageResult.status !== 0) {
     process.exit(packageResult.status ?? 1);
 }
 /** Gets the parsed npm pack metadata. */
-const packageMetadata = JSON.parse(packageResult.stdout);
+const packageMetadata = JSON.parse(packageResult.stdout) as PackageMetadata;
 /*
  * `npm pack --dry-run --json` has returned an array of package metadata objects on older npm
  * versions, but newer npm versions instead return an object keyed by package name. Support both
@@ -38,13 +51,13 @@ const invalidFiles = packageFiles.filter((file) => !requiredFiles.includes(file)
 const missingFiles = requiredFiles.filter((file) => !packageFiles.includes(file));
 if (invalidFiles.length > 0 || missingFiles.length > 0) {
     if (invalidFiles.length > 0) {
-        process.stderr.write(`Unexpected files in package tarball:\n${invalidFiles.map((file) => `- ${file}`).join('\n')}\n`);
+        process.stderr.write(`Unexpected files in package tarball:\n${ invalidFiles.map((file) => `- ${ file }`).join('\n') }\n`);
     }
     if (missingFiles.length > 0) {
-        process.stderr.write(`Required files missing from package tarball:\n${missingFiles.map((file) => `- ${file}`).join('\n')}\n`);
+        process.stderr.write(`Required files missing from package tarball:\n${ missingFiles.map((file) => `- ${ file }`).join('\n') }\n`);
     }
     process.exitCode = 1;
 }
 else {
-    process.stdout.write(`Package tarball validation passed (${packageFiles.length} files).\n`);
+    process.stdout.write(`Package tarball validation passed (${ packageFiles.length } files).\n`);
 }

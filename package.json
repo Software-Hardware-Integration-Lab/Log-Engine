@@ -10,19 +10,25 @@
         "type": "git",
         "url": "git+https://github.com/Software-Hardware-Integration-Lab/LogEngine.git"
     },
+    "exports": {
+        ".": {
+            "types": "./bin/index.d.ts",
+            "import": "./bin/index.js"
+        }
+    },
     "type": "module",
     "scripts": {
         "build": "npm run clean:bin && tspc -p tsconfig.json",
         "build:coverage": "npm run clean:bin && tspc -p coverage.tsconfig.json",
         "build:prod": "npm run clean:bin && tspc -p prod.tsconfig.json",
-        "clean:bin": "node ./scripts/clean-bin.mjs",
+        "clean:bin": "node ./scripts/clean-bin.ts",
         "lint": "eslint",
         "test": "npm run build:coverage && vitest run",
         "test:watch": "vitest",
         "coverage": "npm run build:coverage && vitest run --coverage",
         "validate:package": "npm run update:reachability-pin && npm run validate:package:skip-reachability",
-        "validate:package:skip-reachability": "npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.mjs",
-        "update:reachability-pin": "node ./scripts/update-reachability-pin.mjs",
+        "validate:package:skip-reachability": "npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.ts",
+        "update:reachability-pin": "node ./scripts/update-reachability-pin.ts",
         "prepack": "npm run validate:package",
         "postinstall": "ts-patch install -s"
     },

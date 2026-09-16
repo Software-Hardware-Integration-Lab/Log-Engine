@@ -47,7 +47,7 @@ jobs:
 
       # Promote the coverage summary into the GitHub Actions job summary for easier PR review
       - name: Publish Coverage Summary
-        run: node ./scripts/publish-coverage-summary.mjs
+        run: node ./scripts/publish-coverage-summary.ts
 
       # Create or update one coverage comment for pull request runs.
       - name: Publish Coverage Report to Pull Request
@@ -58,7 +58,7 @@ jobs:
         with:
           script: |
             const { pathToFileURL } = require('node:url');
-            const commentScriptUrl = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/publish-coverage-comment.mjs`);
+            const commentScriptUrl = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/publish-coverage-comment.ts`);
             const { default: publishCoverageComment } = await import(commentScriptUrl.href);
             await publishCoverageComment({
               github,
