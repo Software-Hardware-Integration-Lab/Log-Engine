@@ -1,5 +1,5 @@
 {
-    "version": "0.0.3",
+    "version": "0.0.4",
     "name": "@software-hardware-integration-lab/log-engine",
     "description": "Logging engine with ability to add plugins for any destination",
     "author": {
@@ -51,12 +51,21 @@
         "typia": "~12.1.1"
     },
     "devDependencies": {
+        "@azure/storage-blob": "^12.33.0",
         "@software-hardware-integration-lab/development-utilities": "~3.0.0",
         "@types/node": "~26.5.0",
-        "@vitest/coverage-v8": "~5.0.0",
+        "@vitest/coverage-v8": "~5.0.1",
         "ts-patch": "~4.0.1",
         "typescript": "~6.0.3",
-        "vitest": "~5.0.0"
+        "vitest": "~5.0.1"
+    },
+    "peerDependencies": {
+        "@azure/storage-blob": "^12.33.0"
+    },
+    "peerDependenciesMeta": {
+        "@azure/storage-blob": {
+            "optional": true
+        }
     },
     "overrides": {
         "function-bind": "npm:@socketregistry/function-bind@^1",
