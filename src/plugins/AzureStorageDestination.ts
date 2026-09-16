@@ -295,6 +295,7 @@ export class AzureStorageDestination extends LoggingPlugin {
         return {
             ...DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS,
             ...configuration,
+            'maxAppendBlockBytes': configuration.maxAppendBlockBytes ?? DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS.maxAppendBlockBytes,
             'getShouldWriteAuditLogs': resolvedOptions.getShouldWriteAuditLogs,
             'getShouldWriteDebugInfo': resolvedOptions.getShouldWriteDebugInfo,
             'getShouldWriteOperationalLogs': resolvedOptions.getShouldWriteOperationalLogs
