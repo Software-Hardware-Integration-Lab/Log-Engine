@@ -10,6 +10,9 @@
         "type": "git",
         "url": "git+https://github.com/Software-Hardware-Integration-Lab/LogEngine.git"
     },
+    "imports": {
+        "#/*": "./bin/*"
+    },
     "exports": {
         ".": {
             "types": "./bin/index.d.ts",
