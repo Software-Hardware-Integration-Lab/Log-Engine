@@ -298,7 +298,7 @@ export class AzureStorageDestination extends LoggingPlugin {
         'shouldCreate': boolean,
         'activeHour': number;
     } {
-        const activeHour = new Date().setMinutes(0, 0, 0);
+        const activeHour = new Date().setUTCMinutes(0, 0, 0);
 
         return {
             activeHour,
