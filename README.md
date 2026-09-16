@@ -172,6 +172,8 @@ const azureStorageDestination = await AzureStorageDestination.create(
 	}
 );
 
+const logEngine = LogEngine.getInstance();
+
 await logEngine.addPlugin({
 	'create': async () => azureStorageDestination
 });
