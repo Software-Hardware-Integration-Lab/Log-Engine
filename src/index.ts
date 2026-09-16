@@ -6,6 +6,8 @@ export { FileDestination } from './plugins/FileDestination.js';
 
 export { LogAnalyticsDestination } from './plugins/LogAnalyticsDestination.js';
 
+export { AzureStorageDestination } from './plugins/AzureStorageDestination.js';
+
 export { LogLevel } from './interfaces/LogEngine.js';
 
 export type {
@@ -39,5 +41,10 @@ export type {
     LogAnalyticsUploader,
     LogAnalyticsUploaderFactory
 } from './interfaces/plugins/LogAnalyticsDestination.js';
+
+export type {
+    AzureStorageDestinationOptions,
+    ResolvedAzureStorageDestinationOptions
+} from './interfaces/plugins/AzureStorageDestination.js';
 
 export type { LoggingPluginContract } from './interfaces/plugins/LoggingPlugin.js';
