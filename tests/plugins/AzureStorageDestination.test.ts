@@ -120,6 +120,56 @@ describe('AzureStorageDestination', () => {
         expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(3);
     });
 
+    it('should rotate to a suffixed blob within the same hour once the block-count limit is reached', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2025-01-02T03:04:05.678Z'));
+
+        const operationalContainer = createContainer();
+        const destination = await AzureStorageDestination.create(operationalContainer.container, void 0, {
+            'maxBlocksPerBlob': 1
+        });
+
+        await destination.log(operational);
+        await destination.log(operational);
+        await destination.log(operational);
+
+        expect(operationalContainer.blobNames).toEqual([
+            '2025010203.operational.log',
+            '2025010203.operational.2.log',
+            '2025010203.operational.3.log'
+        ]);
+        expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(3);
+    });
+
+    it('should batch records queued while a flush is in flight into a single append-blob block', async () => {
+        let finishAppend: (() => void) | undefined;
+
+        const operationalContainer = createContainer();
+
+        operationalContainer.appendBlock.mockImplementationOnce(() => new Promise<void>((resolve) => {
+            finishAppend = resolve;
+        }));
+
+        const destination = await AzureStorageDestination.create(operationalContainer.container);
+
+        const firstLog = destination.log(operational);
+
+        await vi.waitFor(() => expect(operationalContainer.appendBlock).toHaveBeenCalledOnce());
+
+        const secondLog = destination.log(operational);
+        const thirdLog = destination.log(operational);
+
+        finishAppend?.();
+
+        await Promise.all([firstLog, secondLog, thirdLog]);
+
+        expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(2);
+
+        const [, [batchedContent]] = operationalContainer.appendBlock.mock.calls as [[string, number], [string, number]];
+
+        expect(batchedContent.match(/"message":"operational entry"/gu)).toHaveLength(2);
+    });
+
     it('should skip disabled streams without appending records', async () => {
         const operationalContainer = createContainer();
         const destination = await AzureStorageDestination.create(operationalContainer.container, void 0, {

@@ -177,7 +177,7 @@ await logEngine.addPlugin({
 });
 ```
 
-The destination creates containers when necessary and uses separate hourly blobs for operational and audit streams. Append Blob records are capped at 4 MiB by default, the stable limit across Azure Storage service versions; set `maxAppendBlockBytes` only after confirming the service version and account capabilities used by the host application.
+The destination creates containers when necessary and uses separate hourly blobs for operational and audit streams. Records queued while a batch is in flight are combined into a single append-blob write, and each write is capped at 4 MiB by default, the stable limit across Azure Storage service versions; set `maxAppendBlockBytes` only after confirming the service version and account capabilities used by the host application. Because Azure limits an append blob to 50,000 blocks, the destination rotates to a suffixed blob (e.g. `2025010203.operational.2.log`) within the same hour once `maxBlocksPerBlob` (default `50000`) is reached, so high-volume streams never exhaust a blob before the hourly rotation.
 
 Configure blob retention with an Azure Storage lifecycle-management policy scoped to the destination container or prefix. The plugin deliberately has only data-plane responsibilities and does not create, replace, or delete storage-account lifecycle rules.
 

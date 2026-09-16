@@ -5,11 +5,24 @@ import { SerializableAuditLog } from '#/classes/SerializableAuditLog.js';
 import { SerializableOperationalLog } from '#/classes/SerializableOperationalLog.js';
 import { assertGuardEquals } from 'typia';
 
+/** A queued log record awaiting a batched append, along with its caller-facing settlement. */
+interface PendingLogRecord {
+    'content': string;
+    'reject': (error: unknown) => void;
+    'resolve': () => void;
+}
+
 interface LogTypeCollection {
     'activeBlob': AzureAppendBlobClientLike | undefined;
-    'appendQueue': Promise<void>;
     'activeBlobDate': number | undefined;
+    /** Suffix applied to the blob name when rotating within the same hour due to the block-count limit. */
+    'blobSuffix': number;
     'blobContainer': AzureBlobContainerLike | undefined;
+    /** Number of append blocks already written to the active blob. */
+    'blockCount': number;
+    /** In-flight batch flush; new records arriving while set are picked up by the next flush. */
+    'flushPromise': Promise<void> | undefined;
+    'pendingRecords': PendingLogRecord[];
 }
 
 /**
@@ -33,16 +46,22 @@ export class AzureStorageDestination extends LoggingPlugin {
 
         this.#operationalCollection = {
             'activeBlob': void 0,
-            'appendQueue': Promise.resolve(),
             'activeBlobDate': void 0,
-            'blobContainer': operationalLogContainer
+            'blobContainer': operationalLogContainer,
+            'blobSuffix': 0,
+            'blockCount': 0,
+            'flushPromise': void 0,
+            'pendingRecords': []
         };
 
         this.#auditCollection = {
             'activeBlob': void 0,
-            'appendQueue': Promise.resolve(),
             'activeBlobDate': void 0,
-            'blobContainer': auditLogContainer
+            'blobContainer': auditLogContainer,
+            'blobSuffix': 0,
+            'blockCount': 0,
+            'flushPromise': void 0,
+            'pendingRecords': []
         };
     }
 
@@ -165,8 +184,8 @@ export class AzureStorageDestination extends LoggingPlugin {
         this.#isDisposed = true;
 
         void Promise.all([
-            this.#operationalCollection?.appendQueue,
-            this.#auditCollection?.appendQueue
+            this.#operationalCollection?.flushPromise,
+            this.#auditCollection?.flushPromise
         ]).finally(() => {
             if (this.#operationalCollection) {
                 this.#operationalCollection.activeBlob = void 0;
@@ -200,51 +219,171 @@ export class AzureStorageDestination extends LoggingPlugin {
                 `the configured maximum is ${ this.#appliedOptions.maxAppendBlockBytes } bytes.`);
         }
 
-        // Queue the append operation to ensure sequential writes.
-        const appendOperation = collection.appendQueue
-            .then(async () => {
-                // Check if a new blob needs to be created based on the current time.
-                const timeResult = AzureStorageDestination.#shouldCreateNewBlob(collection.activeBlobDate);
-
-                return timeResult.shouldCreate
-                    ? {
-                        'activeBlob': await this.#createNewBlob(type, timeResult.activeHour),
-                        'activeBlobDate': timeResult.activeHour
-                    }
-                    : void 0;
-            })
-            .then((newActiveBlob) => {
-                if (newActiveBlob) {
-                    collection.activeBlob = newActiveBlob.activeBlob;
-
-                    collection.activeBlobDate = newActiveBlob.activeBlobDate;
-                }
-
-                // Ensure the active blob is initialized before appending.
-                if (!collection.activeBlob) {
-                    throw new Error('Active blob is not initialized.');
-                }
-
-                // Append the content to the active blob and discard the result.
-                return collection.activeBlob
-                    .appendBlock(content, Buffer.byteLength(content))
-                    .then(() => void 0);
+        // Queue the record; it is combined with any records batched into the same flush.
+        return new Promise<void>((resolve, reject) => {
+            collection.pendingRecords.push({
+                content,
+                reject,
+                resolve
             });
 
-        // Keep the queue usable after an individual append failure.
-        collection.appendQueue = appendOperation.catch(() => void 0);
-
-        return appendOperation;
+            this.#scheduleFlush(collection, type);
+        });
     }
 
-    async #createNewBlob(type: 'audit' | 'operational', activeHour: number): Promise<AzureAppendBlobClientLike | undefined> {
+    /**
+     * Starts a batch flush for a collection when none is already in flight.
+     * @param collection Operational or audit collection to flush.
+     * @param type Discriminator identifying which collection is being flushed.
+     */
+    #scheduleFlush(collection: LogTypeCollection, type: 'audit' | 'operational'): void {
+        if (collection.flushPromise) {
+            return;
+        }
+
+        collection.flushPromise = this.#flushPending(collection, type).finally(() => {
+            collection.flushPromise = void 0;
+
+            // Records may have queued up while this flush was in flight; batch them next.
+            if (collection.pendingRecords.length > 0) {
+                this.#scheduleFlush(collection, type);
+            }
+        });
+    }
+
+    /**
+     * Drains currently queued records, grouping them into append calls that respect the byte limit.
+     * @param collection Operational or audit collection to flush.
+     * @param type Discriminator identifying which collection is being flushed.
+     */
+    async #flushPending(collection: LogTypeCollection, type: 'audit' | 'operational'): Promise<void> {
+        const batch = collection.pendingRecords.splice(0, collection.pendingRecords.length);
+
+        if (batch.length === 0) {
+            return;
+        }
+
+        const groups = AzureStorageDestination.#groupByByteLimit(batch, this.#appliedOptions.maxAppendBlockBytes);
+
+        for (const group of groups) {
+            try {
+                await this.#writeGroup(collection, type, group);
+
+                for (const record of group) {
+                    record.resolve();
+                }
+            } catch (error: unknown) {
+                for (const record of group) {
+                    record.reject(error);
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes a single group of records as one append-blob block, rotating the blob first if required.
+     * @param collection Operational or audit collection to write to.
+     * @param type Discriminator identifying which collection is being written.
+     * @param group Records to combine into a single append-blob write.
+     */
+    async #writeGroup(collection: LogTypeCollection, type: 'audit' | 'operational', group: PendingLogRecord[]): Promise<void> {
+        await this.#ensureActiveBlob(collection, type);
+
+        // Ensure the active blob is initialized before appending.
+        if (!collection.activeBlob) {
+            throw new Error('Active blob is not initialized.');
+        }
+
+        const content = group.map((record) => record.content).join('');
+
+        await collection.activeBlob.appendBlock(content, Buffer.byteLength(content));
+
+        collection.blockCount += 1;
+    }
+
+    /**
+     * Rotates the active blob when the hour has changed or the block-count limit has been reached.
+     * @param collection Operational or audit collection to evaluate.
+     * @param type Discriminator identifying which collection is being rotated.
+     */
+    async #ensureActiveBlob(collection: LogTypeCollection, type: 'audit' | 'operational'): Promise<void> {
+        const activeHour = new Date().setMinutes(0, 0, 0);
+
+        const isNewHour = collection.activeBlobDate === void 0 || activeHour > collection.activeBlobDate;
+
+        const isBlockLimitReached = collection.blockCount >= this.#appliedOptions.maxBlocksPerBlob;
+
+        if (!isNewHour && !isBlockLimitReached) {
+            return;
+        }
+
+        // Reset the suffix on a new hour; otherwise advance it to rotate within the same hour.
+        const blobSuffix = isNewHour ? 0 : collection.blobSuffix + 1;
+
+        const activeBlob = await this.#createNewBlob(type, activeHour, blobSuffix);
+
+        // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
+        collection.activeBlob = activeBlob;
+
+        // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
+        collection.activeBlobDate = activeHour;
+
+        // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
+        collection.blobSuffix = blobSuffix;
+
+        // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
+        collection.blockCount = 0;
+    }
+
+    /**
+     * Groups queued records into batches that each fit within the configured byte limit.
+     * @param batch Queued records awaiting a flush.
+     * @param maxBytes Maximum number of UTF-8 bytes permitted in one append-blob write.
+     * @returns Ordered groups, each of which can be safely combined into a single append-blob write.
+     */
+    static #groupByByteLimit(batch: PendingLogRecord[], maxBytes: number): PendingLogRecord[][] {
+        const groups: PendingLogRecord[][] = [];
+
+        let currentGroup: PendingLogRecord[] = [];
+
+        let currentSize = 0;
+
+        for (const record of batch) {
+            const recordSize = Buffer.byteLength(record.content);
+
+            if (currentGroup.length > 0 && currentSize + recordSize > maxBytes) {
+                groups.push(currentGroup);
+
+                currentGroup = [];
+
+                currentSize = 0;
+            }
+
+            currentGroup.push(record);
+
+            currentSize += recordSize;
+        }
+
+        if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+        }
+
+        return groups;
+    }
+
+    async #createNewBlob(type: 'audit' | 'operational', activeHour: number, suffix: number): Promise<AzureAppendBlobClientLike | undefined> {
         const activeHourDate = new Date(activeHour);
 
-        // Format the blob name based on the current hour
-        let blobName = activeHourDate.toISOString();
+        const isoValue = activeHourDate.toISOString();
+
+        // Format the blob name based on the current hour.
+        const datePrefix = `${ isoValue.slice(0, 10) }${ isoValue.slice(11, 13) }`.replaceAll('-', '');
+
+        // Append a numeric suffix (e.g. .2, .3) when rotating within the same hour due to the block-count limit.
+        const suffixSegment = suffix > 0 ? `.${ suffix + 1 }` : '';
 
         // Construct the final blob name in the format YYYYMMDDHH.audit.log or YYYYMMDDHH.operational.log.
-        blobName = `${ blobName.slice(0, 10) }${ blobName.slice(11, 13) }.${ type }.log`.replaceAll('-', '');
+        const blobName = `${ datePrefix }.${ type }${ suffixSegment }.log`;
 
         const collection = type === 'audit' ? this.#auditCollection : this.#operationalCollection;
 
@@ -288,21 +427,10 @@ export class AzureStorageDestination extends LoggingPlugin {
             ...DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS,
             ...configuration,
             'maxAppendBlockBytes': configuration.maxAppendBlockBytes ?? DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS.maxAppendBlockBytes,
+            'maxBlocksPerBlob': configuration.maxBlocksPerBlob ?? DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS.maxBlocksPerBlob,
             'getShouldWriteAuditLogs': resolvedOptions.getShouldWriteAuditLogs,
             'getShouldWriteDebugInfo': resolvedOptions.getShouldWriteDebugInfo,
             'getShouldWriteOperationalLogs': resolvedOptions.getShouldWriteOperationalLogs
-        };
-    }
-
-    static #shouldCreateNewBlob(currentActiveDate?: number): {
-        'shouldCreate': boolean,
-        'activeHour': number;
-    } {
-        const activeHour = new Date().setMinutes(0, 0, 0);
-
-        return {
-            activeHour,
-            'shouldCreate': currentActiveDate === void 0 || activeHour > currentActiveDate
         };
     }
 

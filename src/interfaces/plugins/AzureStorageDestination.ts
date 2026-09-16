@@ -29,17 +29,23 @@ export interface AzureBlobContainerLike {
 export interface AzureStorageDestinationOptions extends LoggingPluginConfigurationOptions {
     /** Maximum number of UTF-8 bytes permitted in one append-blob write. */
     'maxAppendBlockBytes'?: number & tags.Minimum<1>;
+    /** Maximum number of blocks written to a single append blob before rotating to a suffixed blob. */
+    'maxBlocksPerBlob'?: number & tags.Minimum<1> & tags.Maximum<50_000>;
 }
 
 /** Fully resolved options used internally by the Azure Storage destination. */
 export interface ResolvedAzureStorageDestinationOptions extends LoggingPluginConfigurationOptions {
     /** Maximum number of UTF-8 bytes permitted in one append-blob write. */
     'maxAppendBlockBytes': number & tags.Minimum<1>;
+    /** Maximum number of blocks written to a single append blob before rotating to a suffixed blob. */
+    'maxBlocksPerBlob': number & tags.Minimum<1> & tags.Maximum<50_000>;
 }
 
 /** Static default options for Azure Storage append-blob logging. */
 export const DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS: ResolvedAzureStorageDestinationOptions = {
     ...DEFAULT_LOGGING_PLUGIN_CONFIGURATION_OPTIONS,
     // The stable limit supported by all Append Blob service API versions.
-    'maxAppendBlockBytes': 4 * 1024 * 1024
+    'maxAppendBlockBytes': 4 * 1024 * 1024,
+    // Azure's hard append-blob limit; rotating at this point uses the full available capacity.
+    'maxBlocksPerBlob': 50_000
 };
