@@ -30,6 +30,9 @@ interface LogTypeCollection {
  * Utilizes Azure Blob Storage append blobs for log storage.
  */
 export class AzureStorageDestination extends LoggingPlugin {
+    /** Upper bound on suffix advances while searching for a non-full blob, guarding against an unbounded loop. */
+    static readonly #maxBlobRotationAttempts = 1000;
+
     readonly #operationalCollection: LogTypeCollection | undefined = void 0;
     readonly #auditCollection: LogTypeCollection | undefined = void 0;
     readonly #appliedOptions: ResolvedAzureStorageDestinationOptions;
@@ -296,9 +299,11 @@ export class AzureStorageDestination extends LoggingPlugin {
 
         const content = group.map((record) => record.content).join('');
 
-        await collection.activeBlob.appendBlock(content, Buffer.byteLength(content));
+        const response = await collection.activeBlob.appendBlock(content, Buffer.byteLength(content));
 
-        collection.blockCount += 1;
+        // Prefer Azure's authoritative count so concurrent writers to the same blob stay in sync.
+        // eslint-disable-next-line require-atomic-updates -- #writeGroup only runs within a single-flight flush per collection.
+        collection.blockCount = response.blobCommittedBlockCount ?? collection.blockCount + 1;
     }
 
     /**
@@ -318,12 +323,27 @@ export class AzureStorageDestination extends LoggingPlugin {
         }
 
         // Reset the suffix on a new hour; otherwise advance it to rotate within the same hour.
-        const blobSuffix = isNewHour ? 0 : collection.blobSuffix + 1;
+        let blobSuffix = isNewHour ? 0 : collection.blobSuffix + 1;
 
-        const activeBlob = await this.#createNewBlob(type, activeHour, blobSuffix);
+        let openedBlob = await this.#openBlob(type, activeHour, blobSuffix);
+
+        let rotationAttempts = 0;
+
+        // A reopened blob (from a prior process, or shared with another instance) may already be at capacity; skip past it.
+        while (openedBlob.committedBlockCount >= this.#appliedOptions.maxBlocksPerBlob) {
+            rotationAttempts += 1;
+
+            if (rotationAttempts > AzureStorageDestination.#maxBlobRotationAttempts) {
+                throw new Error(`Failed to find an available ${ type } blob after ${ AzureStorageDestination.#maxBlobRotationAttempts } rotation attempts.`);
+            }
+
+            blobSuffix += 1;
+
+            openedBlob = await this.#openBlob(type, activeHour, blobSuffix);
+        }
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
-        collection.activeBlob = activeBlob;
+        collection.activeBlob = openedBlob.blobClient;
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
         collection.activeBlobDate = activeHour;
@@ -332,7 +352,7 @@ export class AzureStorageDestination extends LoggingPlugin {
         collection.blobSuffix = blobSuffix;
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
-        collection.blockCount = 0;
+        collection.blockCount = openedBlob.committedBlockCount;
     }
 
     /**
@@ -371,7 +391,18 @@ export class AzureStorageDestination extends LoggingPlugin {
         return groups;
     }
 
-    async #createNewBlob(type: 'audit' | 'operational', activeHour: number, suffix: number): Promise<AzureAppendBlobClientLike | undefined> {
+    /**
+     * Creates or reopens the append blob for a given hour and suffix, recovering its true committed block
+     * count when it already existed so callers can detect a blob that is already at capacity.
+     * @param type Discriminator identifying which collection is being opened.
+     * @param activeHour Millisecond timestamp of the top of the hour the blob belongs to.
+     * @param suffix Rotation suffix applied when opening a blob other than the first one for the hour.
+     * @returns The opened blob client, if the collection's container is available, alongside its true committed block count.
+     */
+    async #openBlob(type: 'audit' | 'operational', activeHour: number, suffix: number): Promise<{
+        'blobClient': AzureAppendBlobClientLike | undefined;
+        'committedBlockCount': number;
+    }> {
         const activeHourDate = new Date(activeHour);
 
         const isoValue = activeHourDate.toISOString();
@@ -391,7 +422,10 @@ export class AzureStorageDestination extends LoggingPlugin {
             // Todo - log internal don't throw
             this.#writeDebugLog(`Failed to access the ${ type } log collection.`);
 
-            return void 0;
+            return {
+                'blobClient': void 0,
+                'committedBlockCount': 0
+            };
         }
 
         const blobClient = collection.blobContainer.getAppendBlobClient(blobName);
@@ -402,7 +436,24 @@ export class AzureStorageDestination extends LoggingPlugin {
             this.#writeDebugLog('Failed to create new blob:', result.errorCode);
         }
 
-        return blobClient;
+        // A blob that already existed may have been written by a prior process or another instance; recover its true block count.
+        if (result.succeeded === false) {
+            try {
+                const properties = await blobClient.getProperties();
+
+                return {
+                    blobClient,
+                    'committedBlockCount': properties.blobCommittedBlockCount ?? 0
+                };
+            } catch (error: unknown) {
+                this.#writeDebugLog('Failed to read existing blob properties:', error);
+            }
+        }
+
+        return {
+            blobClient,
+            'committedBlockCount': 0
+        };
     }
 
     static #isContainerClient(value: unknown): value is AzureBlobContainerLike {

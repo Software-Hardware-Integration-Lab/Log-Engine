@@ -31,9 +31,11 @@ const audit: AuditLog = {
 
 interface BlobContainerTestDouble {
     'appendBlock': ReturnType<typeof vi.fn>;
+    'blobCreateIfNotExists': ReturnType<typeof vi.fn>;
     'blobNames': string[];
     'createIfNotExists': ReturnType<typeof vi.fn>;
     'container': ContainerClient;
+    'getProperties': ReturnType<typeof vi.fn>;
 }
 
 function createContainer(): BlobContainerTestDouble {
@@ -41,9 +43,14 @@ function createContainer(): BlobContainerTestDouble {
 
     const blobNames: string[] = [];
 
+    const blobCreateIfNotExists = vi.fn(() => Promise.resolve({ 'succeeded': true }));
+
+    const getProperties = vi.fn(() => Promise.resolve({}));
+
     const appendBlob = {
         'appendBlock': appendBlock,
-        'createIfNotExists': vi.fn(() => Promise.resolve({ 'succeeded': true }))
+        'createIfNotExists': blobCreateIfNotExists,
+        'getProperties': getProperties
     } as unknown as AppendBlobClient;
 
     const createIfNotExists = vi.fn(() => Promise.resolve({ 'succeeded': true }));
@@ -59,9 +66,11 @@ function createContainer(): BlobContainerTestDouble {
 
     return {
         appendBlock,
+        blobCreateIfNotExists,
         blobNames,
         createIfNotExists,
-        container
+        container,
+        getProperties
     };
 }
 
@@ -139,6 +148,75 @@ describe('AzureStorageDestination', () => {
             '2025010203.operational.3.log'
         ]);
         expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(3);
+    });
+
+    it('should recover the true block count from an existing blob\'s properties when reopening it', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2025-01-02T03:04:05.678Z'));
+
+        const operationalContainer = createContainer();
+
+        operationalContainer.blobCreateIfNotExists.mockResolvedValueOnce({ 'succeeded': false });
+        operationalContainer.getProperties.mockResolvedValueOnce({ 'blobCommittedBlockCount': 49_999 });
+
+        const destination = await AzureStorageDestination.create(operationalContainer.container, void 0, {
+            'maxBlocksPerBlob': 50_000
+        });
+
+        await destination.log(operational);
+        await destination.log(operational);
+
+        expect(operationalContainer.blobNames).toEqual([
+            '2025010203.operational.log',
+            '2025010203.operational.2.log'
+        ]);
+    });
+
+    it('should advance past a reopened blob that has already reached the block limit', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2025-01-02T03:04:05.678Z'));
+
+        const operationalContainer = createContainer();
+
+        operationalContainer.blobCreateIfNotExists
+            .mockResolvedValueOnce({ 'succeeded': false })
+            .mockResolvedValueOnce({ 'succeeded': false });
+        operationalContainer.getProperties
+            .mockResolvedValueOnce({ 'blobCommittedBlockCount': 1 })
+            .mockResolvedValueOnce({ 'blobCommittedBlockCount': 0 });
+
+        const destination = await AzureStorageDestination.create(operationalContainer.container, void 0, {
+            'maxBlocksPerBlob': 1
+        });
+
+        await destination.log(operational);
+
+        expect(operationalContainer.blobNames).toEqual([
+            '2025010203.operational.log',
+            '2025010203.operational.2.log'
+        ]);
+        expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should track the block count reported by Azure so concurrent writers to the same blob stay in sync', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2025-01-02T03:04:05.678Z'));
+
+        const operationalContainer = createContainer();
+
+        operationalContainer.appendBlock.mockResolvedValueOnce({ 'blobCommittedBlockCount': 41 });
+
+        const destination = await AzureStorageDestination.create(operationalContainer.container, void 0, {
+            'maxBlocksPerBlob': 41
+        });
+
+        await destination.log(operational);
+        await destination.log(operational);
+
+        expect(operationalContainer.blobNames).toEqual([
+            '2025010203.operational.log',
+            '2025010203.operational.2.log'
+        ]);
     });
 
     it('should batch records queued while a flush is in flight into a single append-blob block', async () => {

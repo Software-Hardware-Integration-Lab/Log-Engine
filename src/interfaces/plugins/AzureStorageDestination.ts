@@ -8,9 +8,14 @@ import type { tags } from 'typia';
  */
 export interface AzureAppendBlobClientLike {
     /** Appends a block of content to the append blob. */
-    'appendBlock': (content: string, contentLength: number) => Promise<unknown>;
-    /** Creates the append blob if it does not already exist. */
-    'createIfNotExists': () => Promise<{ 'errorCode'?: string; }>;
+    'appendBlock': (content: string, contentLength: number) => Promise<{ 'blobCommittedBlockCount'?: number; }>;
+    /** Creates the append blob if it does not already exist; `succeeded` is false when it already existed. */
+    'createIfNotExists': () => Promise<{
+        'errorCode'?: string;
+        'succeeded'?: boolean;
+    }>;
+    /** Reads current blob properties, used to recover the true committed block count of a reopened blob. */
+    'getProperties': () => Promise<{ 'blobCommittedBlockCount'?: number; }>;
 }
 
 /**
