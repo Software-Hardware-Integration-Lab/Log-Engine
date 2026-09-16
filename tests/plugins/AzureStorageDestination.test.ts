@@ -93,10 +93,10 @@ describe('AzureStorageDestination', () => {
 
         expect(operationalContent).toMatch(/\n$/u);
         expect(JSON.parse(operationalContent)).toMatchObject({ 'message': 'operational entry' });
-        expect(operationalContentLength).toBe(Buffer.byteLength(operationalContent));
+        expect(operationalContentLength).toBe(new TextEncoder().encode(operationalContent).byteLength);
         expect(auditContent).toMatch(/\n$/u);
         expect(JSON.parse(auditContent)).toMatchObject({ 'message': 'audit entry' });
-        expect(auditContentLength).toBe(Buffer.byteLength(auditContent));
+        expect(auditContentLength).toBe(new TextEncoder().encode(auditContent).byteLength);
     });
 
     it('should reuse a stream blob within the current hour and rotate it in the next hour', async () => {
