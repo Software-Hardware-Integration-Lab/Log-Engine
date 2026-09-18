@@ -64,6 +64,7 @@ jobs:
       environment: ${{ steps.computedGitHubEnvironment.outputs.environment }}
       shortSha: ${{ steps.shortSha.outputs.shortSha }}
       version: ${{ steps.computedVersion.outputs.version }}
+      semver: ${{ steps.semver.outputs.semver }}
       nodeRuntime: ${{ steps.computedNodeRuntime.outputs.runtime }}
 
     # Set of actions to perform for this execution sandbox
