@@ -72,14 +72,14 @@ jobs:
       - name: Checkout Files from Repo
         uses: actions/checkout@v7
 
-      # Extract the Node.JS runtime required by the package before setting it up.
+      # Extract the minimum supported Node.JS runtime before setting it up.
       - name: Extract Required Node.JS Runtime
         id: computedNodeRuntime
-        run: echo "runtime=$(node -p 'JSON.parse(require("node:fs").readFileSync("package.json", "utf8")).devEngines.runtime.version')" >> "$GITHUB_OUTPUT"
+        run: echo "runtime=$(node ./scripts/get-minimum-node-runtime.ts)" >> "$GITHUB_OUTPUT"
 
       # Ensure npm commands run with the Node version required by the package.
       - name: Set up Node.JS Runtime
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ steps.computedNodeRuntime.outputs.runtime }}
 
