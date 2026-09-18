@@ -106,7 +106,7 @@ jobs:
       # Update the version of SHIELD being uploaded to have a different version number to avoid SDG version conflict
       - name: Tattoo Version - Experimental Channel
         if: ${{ needs.Metadata.outputs.channel != 'stable' }}
-        run: npm version --no-commit-hooks --no-git-tag-version "${{ needs.Metadata.outputs.version }}-${{ needs.Metadata.outputs.channel }}.${{ needs.Metadata.outputs.shortSha }}"
+        run: npm version --no-commit-hooks --no-git-tag-version "${{ needs.Metadata.outputs.semver }}"
 
       # Validate package integrity before publishing (tests, coverage, and production build).
       - name: Validate Package Before Publish
