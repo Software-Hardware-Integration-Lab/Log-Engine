@@ -1,5 +1,5 @@
 {
-    "version": "0.0.4",
+    "version": "0.0.5",
     "name": "@software-hardware-integration-lab/log-engine",
     "description": "Logging engine with ability to add plugins for any destination",
     "author": {
@@ -55,6 +55,7 @@
         "@software-hardware-integration-lab/development-utilities": "~3.0.0",
         "@types/node": "~26.5.0",
         "@vitest/coverage-v8": "~5.0.1",
+        "baseline-browser-mapping": "^2.11.24",
         "ts-patch": "~4.0.1",
         "typescript": "~6.0.3",
         "vitest": "~5.0.1"
