@@ -30,7 +30,7 @@
         "test:watch": "vitest",
         "coverage": "npm run build:coverage && vitest run --coverage",
         "validate:package": "npm run update:reachability-pin && npm run validate:package:skip-reachability",
-        "validate:package:skip-reachability": "npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.ts",
+        "validate:package:skip-reachability": "node ./scripts/validate-audit-signatures.ts && npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.ts",
         "update:reachability-pin": "node ./scripts/update-reachability-pin.ts",
         "prepack": "npm run validate:package",
         "postinstall": "ts-patch install -s"
