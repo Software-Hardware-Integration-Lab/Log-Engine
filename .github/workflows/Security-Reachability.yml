@@ -30,7 +30,7 @@ jobs:
 
     # Sets the scopes available to the github_token injected to the GH Actions runner
     permissions:
-      issues: read
+      issues: write
       contents: read
       pull-requests: read
 

@@ -49,8 +49,8 @@ jobs:
     # Execute the workflow
     uses: ./.github/workflows/Metadata.yml
     with:
-      isRelease: ${{ inputs.isRelease }}
-      isPrerelease: ${{ inputs.isPrerelease }}
+      isRelease: ${{ github.event_name == 'workflow_call' && inputs.isRelease || false }}
+      isPrerelease: ${{ github.event_name == 'workflow_call' && inputs.isPrerelease || false }}
 
   # Execution session that builds the artifacts that are used for deployment
   Build-Prod:
