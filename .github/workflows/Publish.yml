@@ -78,7 +78,7 @@ jobs:
         background: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh attestation verify ${{ needs.Build.outputs.packageName }} --repo Software-Hardware-Integration-Lab/LogEngine --signer-workflow Software-Hardware-Integration-Lab/LogEngine/.github/workflows/Build.yml@${{ github.event_name == 'release' && format('refs/tags/{0}', github.ref_name) || 'refs/heads/main' }}
+        run: gh attestation verify ${{ needs.Build.outputs.packageName }} --repo Software-Hardware-Integration-Lab/Log-Engine --signer-workflow Software-Hardware-Integration-Lab/Log-Engine/.github/workflows/Build.yml@${{ github.event_name == 'release' && format('refs/tags/{0}', github.ref_name) || 'refs/heads/main' }}
 
       # Update the NPM CLI to the latest available version
       - name: Update NPM CLI
