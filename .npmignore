@@ -26,3 +26,4 @@ package-lock.json
 
 # Test artifacts that could be emitted into the build directory
 bin/test
+.idea
