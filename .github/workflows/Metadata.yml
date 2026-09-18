@@ -36,6 +36,12 @@ on:
       version:
         description: 'The version of the project that is being built.'
         value: ${{ jobs.Deploy-Metadata.outputs.version }}
+      semver:
+        description: 'The semantic version of the project that is being built.'
+        value: ${{ jobs.Deploy-Metadata.outputs.semver }}
+      nodeRuntime:
+        description: 'The Node.JS runtime version required by the project.'
+        value: ${{ jobs.Deploy-Metadata.outputs.nodeRuntime }}
 
 # Define each session of execution that should be executed
 jobs:
@@ -58,12 +64,24 @@ jobs:
       environment: ${{ steps.computedGitHubEnvironment.outputs.environment }}
       shortSha: ${{ steps.shortSha.outputs.shortSha }}
       version: ${{ steps.computedVersion.outputs.version }}
+      nodeRuntime: ${{ steps.computedNodeRuntime.outputs.runtime }}
 
     # Set of actions to perform for this execution sandbox
     steps:
       # Download the source code
       - name: Checkout Files from Repo
         uses: actions/checkout@v7
+
+      # Extract the minimum supported Node.JS runtime before setting it up.
+      - name: Extract Required Node.JS Runtime
+        id: computedNodeRuntime
+        run: echo "runtime=$(node ./scripts/get-minimum-node-runtime.ts)" >> "$GITHUB_OUTPUT"
+
+      # Ensure npm commands run with the Node version required by the package.
+      - name: Set up Node.JS Runtime
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ steps.computedNodeRuntime.outputs.runtime }}
 
       # Extract the project version from the package.json
       - name: Extract Project Version
@@ -84,17 +102,6 @@ jobs:
             echo "channel=alpha" >> "$GITHUB_OUTPUT"
           fi
 
-      # Compute the GitHub Environment to be used by the deployment
-      - name: Compute GitHub Environment
-        id: computedGitHubEnvironment
-        background: true
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "environment=Azure-Privileged" >> "$GITHUB_OUTPUT"
-          else
-            echo "environment=Azure-Alpha" >> "$GITHUB_OUTPUT"
-          fi
-
       # Get the first 7 chars of the SHA hash that represents the current commit that the build is operating off of.
       - name: Compute Short SHA - Experimental Channel
         id: shortSha
@@ -104,3 +111,21 @@ jobs:
       # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
       - name: Steps - Convert Back To Synchronous Execution
         wait-all: true
+
+      # Concatenates all previous computed values to generate the semver
+      - name: Calculate Final Semver
+        id: semver
+        run: |
+          if [ "${{ steps.computedChannel.outputs.channel }}" != "stable" ]; then
+            echo "semver=${{ steps.computedVersion.outputs.version }}-${{ steps.computedChannel.outputs.channel }}.${{ steps.shortSha.outputs.shortSha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "semver=${{ steps.computedVersion.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Publish the resolved project version to the GitHub Actions job summary.
+      - name: Publish Metadata Summary
+        run: |
+          echo "## Build Metadata" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Project version: \`${{ steps.semver.outputs.semver }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Channel: \`${{ steps.computedChannel.outputs.channel }}\`" >> "$GITHUB_STEP_SUMMARY"
