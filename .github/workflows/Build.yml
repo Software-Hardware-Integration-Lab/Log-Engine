@@ -17,6 +17,16 @@ on:
         description: 'Correlates the origin job with the child instance since process start does not return an ID.'
         type: string
         required: false
+      isRelease:
+        description: 'Indicates that the calling workflow was triggered by a release.'
+        type: boolean
+        required: false
+        default: false
+      isPrerelease:
+        description: 'Indicates that the calling release is a prerelease.'
+        type: boolean
+        required: false
+        default: false
     outputs:
       channel:
         description: 'The channel that the build should be published to.'
@@ -38,6 +48,9 @@ jobs:
 
     # Execute the workflow
     uses: ./.github/workflows/Metadata.yml
+    with:
+      isRelease: ${{ inputs.isRelease }}
+      isPrerelease: ${{ inputs.isPrerelease }}
 
   # Execution session that builds the artifacts that are used for deployment
   Build-Prod:
