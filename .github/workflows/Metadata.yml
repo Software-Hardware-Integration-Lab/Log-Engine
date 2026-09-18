@@ -131,3 +131,4 @@ jobs:
           echo "## Build Metadata" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Project version: \`${{ steps.semver.outputs.semver }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Channel: \`${{ steps.computedChannel.outputs.channel }}\`" >> "$GITHUB_STEP_SUMMARY"
