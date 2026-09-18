@@ -53,7 +53,7 @@ jobs:
         uses: actions/setup-node@v6
         background: true
         with:
-          node-version: 24
+          node-version: ${{ needs.Build.outputs.nodeRuntime }}
 
       # Download the compiled server binary
       - name: Download Artifact From Build Job

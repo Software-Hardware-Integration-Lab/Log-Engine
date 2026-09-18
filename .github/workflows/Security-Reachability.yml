@@ -39,17 +39,21 @@ jobs:
       # Downloads the repo at the specified depth calculated previously
       - name: Clone Repo
         uses: actions/checkout@v7
-        background: true
         with:
           # For PRs, fetch one additional commit for proper diff analysis
           fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+
+      # Read the package's minimum supported runtime so CI validates the lowest common denominator.
+      - name: Read Required Node.JS Runtime
+        id: node-runtime
+        run: echo "runtime=$(node ./scripts/get-minimum-node-runtime.ts)" >> "$GITHUB_OUTPUT"
 
       # Set up NodeJS on the build host with caching support to optimize execution
       - name: Set up Node.js
         uses: actions/setup-node@v6
         background: true
         with:
-          node-version: 24
+          node-version: ${{ steps.node-runtime.outputs.runtime }}
 
       # Set up Python runtime on the build host
       - name: Set up Python

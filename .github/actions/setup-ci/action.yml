@@ -12,11 +12,17 @@ inputs:
 runs:
   using: composite
   steps:
+    # Read the package's minimum supported runtime so CI validates the lowest common denominator.
+    - name: Read Required Node.JS Runtime
+      id: node-runtime
+      shell: bash
+      run: echo "runtime=$(node ./scripts/get-minimum-node-runtime.ts)" >> "$GITHUB_OUTPUT"
+
     # Enable Node.JS in the build environment
     - name: Install - Node.JS Runtime
       uses: actions/setup-node@v6
       with:
-        node-version: 24
+        node-version: ${{ steps.node-runtime.outputs.runtime }}
 
     # Set up the socket firewall binary
     - name: Install - Socket Firewall
