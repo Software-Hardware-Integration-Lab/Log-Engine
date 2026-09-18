@@ -39,6 +39,9 @@ on:
       version:
         description: 'The version of the project that is being built.'
         value: ${{ jobs.Deploy-Metadata.outputs.version }}
+      semver:
+        description: 'The semantic version of the project that is being built.'
+        value: ${{ jobs.Deploy-Metadata.outputs.semver }}
       nodeRuntime:
         description: 'The Node.JS runtime version required by the project.'
         value: ${{ jobs.Deploy-Metadata.outputs.nodeRuntime }}
@@ -123,9 +126,19 @@ jobs:
       - name: Steps - Convert Back To Synchronous Execution
         wait-all: true
 
+      # Concatenates all previous computed values to generate the semver
+      - name: Calculate Final Semver
+        id: semver
+        run: |
+          if [ "${{ steps.computedChannel.outputs.channel }}" != "stable" ]; then
+            echo "semver=${{ steps.computedVersion.outputs.version }}-${{ steps.computedChannel.outputs.channel }}.${{ steps.shortSha.outputs.shortSha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "semver=${{ steps.computedVersion.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
       # Publish the resolved project version to the GitHub Actions job summary.
       - name: Publish Metadata Summary
         run: |
           echo "## Build Metadata" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Project version: \`${{ steps.computedVersion.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Project version: \`${{ steps.semver.outputs.semver }}\`" >> "$GITHUB_STEP_SUMMARY"
