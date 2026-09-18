@@ -122,3 +122,10 @@ jobs:
       # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
       - name: Steps - Convert Back To Synchronous Execution
         wait-all: true
+
+      # Publish the resolved project version to the GitHub Actions job summary.
+      - name: Publish Metadata Summary
+        run: |
+          echo "## Build Metadata" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Project version: \`${{ steps.computedVersion.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
