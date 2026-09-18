@@ -105,17 +105,6 @@ jobs:
             echo "channel=alpha" >> "$GITHUB_OUTPUT"
           fi
 
-      # Compute the GitHub Environment to be used by the deployment
-      - name: Compute GitHub Environment
-        id: computedGitHubEnvironment
-        background: true
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "environment=Azure-Privileged" >> "$GITHUB_OUTPUT"
-          else
-            echo "environment=Azure-Alpha" >> "$GITHUB_OUTPUT"
-          fi
-
       # Get the first 7 chars of the SHA hash that represents the current commit that the build is operating off of.
       - name: Compute Short SHA - Experimental Channel
         id: shortSha
