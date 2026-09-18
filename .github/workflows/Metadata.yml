@@ -6,6 +6,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+  #temporary on push trigger to validate if is working
+  push:
+
   # Allow this workflow to be called from another workflow
   workflow_call:
     inputs:
@@ -36,6 +39,9 @@ on:
       version:
         description: 'The version of the project that is being built.'
         value: ${{ jobs.Deploy-Metadata.outputs.version }}
+      nodeRuntime:
+        description: 'The Node.JS runtime version required by the project.'
+        value: ${{ jobs.Deploy-Metadata.outputs.nodeRuntime }}
 
 # Define each session of execution that should be executed
 jobs:
@@ -58,12 +64,24 @@ jobs:
       environment: ${{ steps.computedGitHubEnvironment.outputs.environment }}
       shortSha: ${{ steps.shortSha.outputs.shortSha }}
       version: ${{ steps.computedVersion.outputs.version }}
+      nodeRuntime: ${{ steps.computedNodeRuntime.outputs.runtime }}
 
     # Set of actions to perform for this execution sandbox
     steps:
       # Download the source code
       - name: Checkout Files from Repo
         uses: actions/checkout@v7
+
+      # Extract the Node.JS runtime required by the package before setting it up.
+      - name: Extract Required Node.JS Runtime
+        id: computedNodeRuntime
+        run: echo "runtime=$(node -p 'JSON.parse(require("node:fs").readFileSync("package.json", "utf8")).devEngines.runtime.version')" >> "$GITHUB_OUTPUT"
+
+      # Ensure npm commands run with the Node version required by the package.
+      - name: Set up Node.JS Runtime
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.computedNodeRuntime.outputs.runtime }}
 
       # Extract the project version from the package.json
       - name: Extract Project Version
