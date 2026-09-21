@@ -44,7 +44,7 @@ jobs:
       id-token: write
 
     # The deploy step runs in the NPM authorized context
-    environment: NPM
+    environment: NPM-OIDC
 
     # Set of commands to run for the build job
     steps:
