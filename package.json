@@ -6,6 +6,7 @@
         "name": "Michael Howard",
         "email": "Michael_Howard@SHI.com"
     },
+    "license": "MIT",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Software-Hardware-Integration-Lab/Log-Engine.git"
