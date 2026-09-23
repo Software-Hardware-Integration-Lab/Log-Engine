@@ -85,13 +85,9 @@ export class ConsoleDestination extends LoggingPlugin {
             return Promise.resolve();
         }
 
-        /** The UTC timestamp of the log creation time, formatted as 'YYYY-MM-DD HH:mm:ss.sss'. */
-        const createdUtc = ConsoleDestination.#formatTimestamp(log.timeGenerated);
+        const method = this.#getConsoleMethod(log.level);
 
-        /** The formatted operational log message for console output. */
-        const logMessage = `${ createdUtc }: ${ ConsoleDestination.#getLogLevelName(log.level) } ${ log.message }`;
-
-        ConsoleDestination.#writeToConsole(this.#getConsoleMethod(log.level), logMessage, log);
+        ConsoleDestination.#writeToConsole(method, this.#formatOperationalLog(log));
 
         return Promise.resolve();
     }
@@ -153,7 +149,8 @@ export class ConsoleDestination extends LoggingPlugin {
             'logLevelToConsoleMethod': {
                 ...DEFAULT_CONSOLE_DESTINATION_LOG_LEVEL_MAP,
                 ...options.logLevelToConsoleMethod ?? {}
-            }
+            },
+            'enableTimestamps': options.enableTimestamps ?? DEFAULT_CONSOLE_DESTINATION_OPTIONS.enableTimestamps
         };
 
         return resolvedOptions;
@@ -193,8 +190,60 @@ export class ConsoleDestination extends LoggingPlugin {
      * @param message The formatted console message.
      * @param log The payload to log alongside the message.
      */
-    static #writeToConsole(method: ConsoleDestinationMethod, message: string, log: AuditLog | OperationalLog): void {
+    static #writeToConsole(method: ConsoleDestinationMethod, message: string, log?: AuditLog | OperationalLog): void {
         // eslint-disable-next-line no-console
         console[method](message, log);
+    }
+
+    #formatOperationalLog(log: OperationalLog): string {
+        let output = '';
+
+        /*
+         *Const createdUtc = ConsoleDestination.#formatTimestamp(log.timeGenerated);
+         *const logMessage = `${ createdUtc }: ${ ConsoleDestination.#getLogLevelName(log.level) } ${ log.message }`;
+         */
+
+        if (this.#appliedOptions.enableTimestamps) {
+            output += `${ ConsoleDestination.#formatTimestamp(log.timeGenerated) }: `;
+        }
+
+        output += `${ ConsoleDestination.#getLogLevelName(log.level) } | ${ log.message } | correlationId: ${ log.correlationId } | userId: ${ log.userId }`;
+
+        if (log.requestId) { output += ` | requestId: ${ log.requestId } `; }
+
+        if (log.tenantId) { output += ` | tenantId: ${ log.tenantId } `; }
+
+        switch (typeof log.additionalContext) {
+            case 'string':
+                try {
+                    const parsed = JSON.parse(log.additionalContext) as Record<string, unknown>;
+
+                    for (const [key, value] of Object.entries(parsed)) {
+                        output += ` | ${ key }: ${ String(value) } `;
+                    }
+                } catch {
+                    output += ` | additionalContext: ${ log.additionalContext } `;
+                }
+
+                break; case 'number':
+                output += ` | additionalContext: ${ log.additionalContext } `;
+
+                break; case 'object':
+                if (log.additionalContext instanceof Date) {
+                    output += ` | additionalContext: ${ log.additionalContext.toISOString() } `;
+                }
+
+                break;
+            case 'undefined':
+            default:
+                // Nothing yet
+                break;
+        }
+
+        if (log.stack) {
+            output += `\n${ log.stack }`;
+        }
+
+        return output.trimEnd();
     }
 }

@@ -48,3 +48,5 @@ export type {
 } from './interfaces/plugins/AzureStorageDestination.js';
 
 export type { LoggingPluginContract } from './interfaces/plugins/LoggingPlugin.js';
+
+export type { Logger } from './Logger.js';

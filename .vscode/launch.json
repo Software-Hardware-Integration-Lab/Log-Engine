@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Build Watch",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npx tspc -p coverage.tsconfig.json --watch"
+        },
+        {
+            "name": "Vitest Debug",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+            "args": [
+                "Logger.test.ts",
+                "--inspect-brk",
+                "--no-file-parallelism"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Watch + Vitest",
+            "configurations": [
+                "Build Watch",
+                "Vitest Debug"
+            ]
+        }
+    ]
+}

@@ -11,12 +11,22 @@ export type ConsoleDestinationLogLevelMap = Partial<Record<LogLevel, ConsoleDest
 export interface ConsoleDestinationOptions extends LoggingPluginConfigurationOptions {
     /** Per-level console method overrides for operational log output. */
     'logLevelToConsoleMethod'?: ConsoleDestinationLogLevelMap;
+    /**
+     * Flag to dictate if timestamp should be shown on logs. Best turned off if your console already has timestamps.
+     * Defaults to true.
+     */
+    'enableTimestamps'?: boolean;
 }
 
 /** Fully resolved options used internally by the console logging destination. */
 export interface ResolvedConsoleDestinationOptions extends LoggingPluginConfigurationOptions {
     /** Fully resolved level-to-console-method routing for operational log output. */
     'logLevelToConsoleMethod': Record<LogLevel, ConsoleDestinationMethod>;
+    /**
+     * Flag to dictate if timestamp should be shown on logs. Best turned off if your console already has timestamps.
+     * Defaults to true.
+     */
+    'enableTimestamps': boolean;
 }
 
 /** Default level-to-console-method routing used by the console destination. */
@@ -32,5 +42,6 @@ export const DEFAULT_CONSOLE_DESTINATION_LOG_LEVEL_MAP: Record<LogLevel, Console
 /** Default configuration values used by the console destination. */
 export const DEFAULT_CONSOLE_DESTINATION_OPTIONS: ResolvedConsoleDestinationOptions = {
     ...DEFAULT_LOGGING_PLUGIN_CONFIGURATION_OPTIONS,
-    'logLevelToConsoleMethod': { ...DEFAULT_CONSOLE_DESTINATION_LOG_LEVEL_MAP }
+    'logLevelToConsoleMethod': { ...DEFAULT_CONSOLE_DESTINATION_LOG_LEVEL_MAP },
+    'enableTimestamps': true
 };
