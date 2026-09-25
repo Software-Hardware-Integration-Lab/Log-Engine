@@ -14,7 +14,7 @@ interface PendingLogRecord {
 
 interface LogTypeCollection {
     'activeBlob': AzureAppendBlobClientLike | undefined;
-    'activeBlobDate': number | undefined;
+    'activeWindowStart': number | undefined;
     /** Suffix applied to the blob name when rotating within the same hour due to the block-count limit. */
     'blobSuffix': number;
     'blobContainer': AzureBlobContainerLike | undefined;
@@ -49,7 +49,7 @@ export class AzureStorageDestination extends LoggingPlugin {
 
         this.#operationalCollection = {
             'activeBlob': void 0,
-            'activeBlobDate': void 0,
+            'activeWindowStart': void 0,
             'blobContainer': operationalLogContainer,
             'blobSuffix': 0,
             'blockCount': 0,
@@ -59,7 +59,7 @@ export class AzureStorageDestination extends LoggingPlugin {
 
         this.#auditCollection = {
             'activeBlob': void 0,
-            'activeBlobDate': void 0,
+            'activeWindowStart': void 0,
             'blobContainer': auditLogContainer,
             'blobSuffix': 0,
             'blockCount': 0,
@@ -193,13 +193,13 @@ export class AzureStorageDestination extends LoggingPlugin {
             if (this.#operationalCollection) {
                 this.#operationalCollection.activeBlob = void 0;
 
-                this.#operationalCollection.activeBlobDate = void 0;
+                this.#operationalCollection.activeWindowStart = void 0;
             }
 
             if (this.#auditCollection) {
                 this.#auditCollection.activeBlob = void 0;
 
-                this.#auditCollection.activeBlobDate = void 0;
+                this.#auditCollection.activeWindowStart = void 0;
             }
         });
     }
@@ -312,20 +312,20 @@ export class AzureStorageDestination extends LoggingPlugin {
      * @param type Discriminator identifying which collection is being rotated.
      */
     async #ensureActiveBlob(collection: LogTypeCollection, type: 'audit' | 'operational'): Promise<void> {
-        const activeHour = new Date().setMinutes(0, 0, 0);
+        const activeWindow = this.#getActiveWindowStart();
 
-        const isNewHour = collection.activeBlobDate === void 0 || activeHour > collection.activeBlobDate;
+        const isNewWindow = collection.activeWindowStart === void 0 || activeWindow > collection.activeWindowStart;
 
         const isBlockLimitReached = collection.blockCount >= this.#appliedOptions.maxBlocksPerBlob;
 
-        if (!isNewHour && !isBlockLimitReached) {
+        if (!isNewWindow && !isBlockLimitReached) {
             return;
         }
 
         // Reset the suffix on a new hour; otherwise advance it to rotate within the same hour.
-        let blobSuffix = isNewHour ? 0 : collection.blobSuffix + 1;
+        let blobSuffix = isNewWindow ? 0 : collection.blobSuffix + 1;
 
-        let openedBlob = await this.#openBlob(type, activeHour, blobSuffix);
+        let openedBlob = await this.#openBlob(type, activeWindow, blobSuffix);
 
         let rotationAttempts = 0;
 
@@ -339,20 +339,34 @@ export class AzureStorageDestination extends LoggingPlugin {
 
             blobSuffix += 1;
 
-            openedBlob = await this.#openBlob(type, activeHour, blobSuffix);
+            openedBlob = await this.#openBlob(type, activeWindow, blobSuffix);
         }
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
         collection.activeBlob = openedBlob.blobClient;
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
-        collection.activeBlobDate = activeHour;
+        collection.activeWindowStart = activeWindow;
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
         collection.blobSuffix = blobSuffix;
 
         // eslint-disable-next-line require-atomic-updates -- #ensureActiveBlob only runs within a single-flight flush per collection.
         collection.blockCount = openedBlob.committedBlockCount;
+    }
+
+    /**
+     * Calculates the start of the rotation window that the current time falls within, anchored to UTC midnight.
+     * @returns Millisecond timestamp of the start of the active rotation window.
+     */
+    #getActiveWindowStart(): number {
+        const now = Date.now();
+
+        const intervalMs = this.#appliedOptions.rotationIntervalMinutes * 60_000;
+
+        const dayStart = new Date(now).setUTCHours(0, 0, 0, 0);
+
+        return dayStart + (Math.floor((now - dayStart) / intervalMs) * intervalMs);
     }
 
     /**
@@ -395,25 +409,23 @@ export class AzureStorageDestination extends LoggingPlugin {
      * Creates or reopens the append blob for a given hour and suffix, recovering its true committed block
      * count when it already existed so callers can detect a blob that is already at capacity.
      * @param type Discriminator identifying which collection is being opened.
-     * @param activeHour Millisecond timestamp of the top of the hour the blob belongs to.
+     * @param windowStart Millisecond timestamp of the start of the time window the blob belongs to.
      * @param suffix Rotation suffix applied when opening a blob other than the first one for the hour.
      * @returns The opened blob client, if the collection's container is available, alongside its true committed block count.
      */
-    async #openBlob(type: 'audit' | 'operational', activeHour: number, suffix: number): Promise<{
+    async #openBlob(type: 'audit' | 'operational', windowStart: number, suffix: number): Promise<{
         'blobClient': AzureAppendBlobClientLike | undefined;
         'committedBlockCount': number;
     }> {
-        const activeHourDate = new Date(activeHour);
+        const isoValue = new Date(windowStart).toISOString();
 
-        const isoValue = activeHourDate.toISOString();
-
-        // Format the blob name based on the current hour.
-        const datePrefix = `${ isoValue.slice(0, 10) }${ isoValue.slice(11, 13) }`.replaceAll('-', '');
+        // YYYYMMDDHHmm — minute resolution is required for sub-hourly rotation intervals.
+        const datePrefix = `${ isoValue.slice(0, 10).replaceAll('-', '') }${ isoValue.slice(11, 13) }${ isoValue.slice(14, 16) }`;
 
         // Append a numeric suffix (e.g. .2, .3) when rotating within the same hour due to the block-count limit.
         const suffixSegment = suffix > 0 ? `.${ suffix + 1 }` : '';
 
-        // Construct the final blob name in the format YYYYMMDDHH.audit.log or YYYYMMDDHH.operational.log.
+        // Construct the final blob name in the format YYYYMMDDHHmm.audit.log or YYYYMMDDHHmm.operational.log.
         const blobName = `${ datePrefix }.${ type }${ suffixSegment }.log`;
 
         const collection = type === 'audit' ? this.#auditCollection : this.#operationalCollection;
