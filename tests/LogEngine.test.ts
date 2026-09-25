@@ -220,9 +220,9 @@ describe('LogEngine', () => {
 
         expect(failingPlugin.log).toHaveBeenCalledWith(expect.objectContaining({ 'correlationId': UUID_EMPTY }));
 
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin failed: log failure'));
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin \'failure\' failed: log failure'));
 
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin failed: audit failure'));
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Logging plugin \'failure\' failed: audit failure'));
 
         LogEngine.configureHost({
             'getRequestMetadata': () => ({ 'correlationId': uuid }) as never,

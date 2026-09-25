@@ -335,14 +335,15 @@ export class LogEngine {
     /**
      * Executes a plugin logging operation and reports any failure without
      * interrupting delivery to remaining plugins.
+     * @param pluginId The plugin identifier.
      * @param logFunction The asynchronous plugin logging operation to execute.
      * @returns A promise that resolves after the operation completes or its failure is reported.
      */
-    static async #logErrorHandle(logFunction: () => Promise<void>): Promise<void> {
+    static async #logErrorHandle(pluginId: string, logFunction: () => Promise<void>): Promise<void> {
         try {
             await logFunction();
         } catch (error: unknown) {
-            LogEngine.#reportInternalError(`Logging plugin failed: ${ error instanceof Error ? error.message : String(error) }`);
+            LogEngine.#reportInternalError(`Logging plugin '${ pluginId }' failed: ${ error instanceof Error ? error.message : String(error) }`);
         }
     }
 
