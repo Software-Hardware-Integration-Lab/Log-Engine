@@ -191,8 +191,13 @@ export class ConsoleDestination extends LoggingPlugin {
      * @param log The payload to log alongside the message.
      */
     static #writeToConsole(method: ConsoleDestinationMethod, message: string, log?: AuditLog | OperationalLog): void {
-        // eslint-disable-next-line no-console
-        console[method](message, log);
+        if (log) {
+            // eslint-disable-next-line no-console
+            console[method](message, log);
+        } else {
+            // eslint-disable-next-line no-console
+            console[method](message);
+        }
     }
 
     #formatOperationalLog(log: OperationalLog): string {
