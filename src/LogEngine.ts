@@ -304,11 +304,12 @@ export class LogEngine {
         /** Point in time snapshot of the current enabled plugins to avoid race conditions. */
         const pluginsSnapshot = [...this.#pluginList];
 
-        // Iterate through each registered plugin and await its processing of the log entry.
-        for (const plugin of pluginsSnapshot) {
-            // Await the plugin operation to process the log entry before moving on to the next plugin, ensuring sequential processing.
-            await LogEngine.#logErrorHandle(() => plugin.log(logEntry));
-        }
+        /*
+         * Dispatch to all plugins concurrently; await the batch so callers know every
+         * plugin has settled before this resolves.
+         */
+        await Promise.all(pluginsSnapshot.map((plugin) => LogEngine
+            .#logErrorHandle(plugin.id, () => plugin.log(logEntry))));
     }
 
     /**
@@ -323,11 +324,12 @@ export class LogEngine {
         /** Point in time snapshot of the current enabled plugins to avoid race conditions. */
         const pluginsSnapshot = [...this.#pluginList];
 
-        // Iterate through each registered plugin and await its processing of the audit log entry.
-        for (const plugin of pluginsSnapshot) {
-            // Await the plugin operation to process the audit log entry before moving on to the next plugin, ensuring sequential processing.
-            await LogEngine.#logErrorHandle(() => plugin.auditLog(logEntry));
-        }
+        /*
+         * Dispatch to all plugins concurrently; await the batch so callers know every
+         *  plugin has settled before this resolves.
+         */
+        await Promise.all(pluginsSnapshot.map((plugin) => LogEngine
+            .#logErrorHandle(plugin.id, () => plugin.auditLog(logEntry))));
     }
 
     /**
