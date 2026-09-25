@@ -1,5 +1,5 @@
 {
-    "version": "0.0.10",
+    "version": "0.0.11",
     "name": "@software-hardware-integration-lab/log-engine",
     "description": "Logging engine with ability to add plugins for any destination",
     "author": {
@@ -34,7 +34,8 @@
         "validate:package:skip-reachability": "node ./scripts/validate-audit-signatures.ts && npm run lint && npm run coverage && npm run build:prod && node ./scripts/validate-package.ts",
         "update:reachability-pin": "node ./scripts/update-reachability-pin.ts",
         "prepack": "npm run validate:package",
-        "postinstall": "ts-patch install -s"
+        "postinstall": "ts-patch install -s",
+        "testapp": "npm run build:prod && node ./bin/test-app/entry-point.js"
     },
     "packageManager": "npm@12.1.0",
     "devEngines": {

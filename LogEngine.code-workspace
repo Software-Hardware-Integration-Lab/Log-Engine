@@ -5,6 +5,7 @@
         }
     ],
     "settings": {
+        "azurite.location": "azurite/",
         "files.associations": {
             "*.tsconfig.json": "jsonc",
             "coverage.tsconfig.json": "jsonc",

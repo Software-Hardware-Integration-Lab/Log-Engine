@@ -304,11 +304,12 @@ export class LogEngine {
         /** Point in time snapshot of the current enabled plugins to avoid race conditions. */
         const pluginsSnapshot = [...this.#pluginList];
 
-        // Iterate through each registered plugin and await its processing of the log entry.
-        for (const plugin of pluginsSnapshot) {
-            // Await the plugin operation to process the log entry before moving on to the next plugin, ensuring sequential processing.
-            await LogEngine.#logErrorHandle(() => plugin.log(logEntry));
-        }
+        /*
+         * Dispatch to all plugins concurrently; await the batch so callers know every
+         * plugin has settled before this resolves.
+         */
+        await Promise.all(pluginsSnapshot.map((plugin) => LogEngine
+            .#logErrorHandle(plugin.id, () => plugin.log(logEntry))));
     }
 
     /**
@@ -323,24 +324,26 @@ export class LogEngine {
         /** Point in time snapshot of the current enabled plugins to avoid race conditions. */
         const pluginsSnapshot = [...this.#pluginList];
 
-        // Iterate through each registered plugin and await its processing of the audit log entry.
-        for (const plugin of pluginsSnapshot) {
-            // Await the plugin operation to process the audit log entry before moving on to the next plugin, ensuring sequential processing.
-            await LogEngine.#logErrorHandle(() => plugin.auditLog(logEntry));
-        }
+        /*
+         * Dispatch to all plugins concurrently; await the batch so callers know every
+         *  plugin has settled before this resolves.
+         */
+        await Promise.all(pluginsSnapshot.map((plugin) => LogEngine
+            .#logErrorHandle(plugin.id, () => plugin.auditLog(logEntry))));
     }
 
     /**
      * Executes a plugin logging operation and reports any failure without
      * interrupting delivery to remaining plugins.
+     * @param pluginId The plugin identifier.
      * @param logFunction The asynchronous plugin logging operation to execute.
      * @returns A promise that resolves after the operation completes or its failure is reported.
      */
-    static async #logErrorHandle(logFunction: () => Promise<void>): Promise<void> {
+    static async #logErrorHandle(pluginId: string, logFunction: () => Promise<void>): Promise<void> {
         try {
             await logFunction();
         } catch (error: unknown) {
-            LogEngine.#reportInternalError(`Logging plugin failed: ${ error instanceof Error ? error.message : String(error) }`);
+            LogEngine.#reportInternalError(`Logging plugin '${ pluginId }' failed: ${ error instanceof Error ? error.message : String(error) }`);
         }
     }
 

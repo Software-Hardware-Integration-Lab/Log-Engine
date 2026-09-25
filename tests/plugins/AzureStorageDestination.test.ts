@@ -94,8 +94,8 @@ describe('AzureStorageDestination', () => {
 
         expect(operationalContainer.createIfNotExists).toHaveBeenCalledOnce();
         expect(auditContainer.createIfNotExists).toHaveBeenCalledOnce();
-        expect(operationalContainer.blobNames).toEqual(['2025010203.operational.log']);
-        expect(auditContainer.blobNames).toEqual(['2025010203.audit.log']);
+        expect(operationalContainer.blobNames).toEqual(['202501020300.operational.log']);
+        expect(auditContainer.blobNames).toEqual(['202501020300.audit.log']);
 
         const [[operationalContent, operationalContentLength]] = operationalContainer.appendBlock.mock.calls as [[string, number]];
         const [[auditContent, auditContentLength]] = auditContainer.appendBlock.mock.calls as [[string, number]];
@@ -123,8 +123,8 @@ describe('AzureStorageDestination', () => {
         await destination.log(operational);
 
         expect(operationalContainer.blobNames).toEqual([
-            '2025010203.operational.log',
-            '2025010204.operational.log'
+            '202501020300.operational.log',
+            '202501020400.operational.log'
         ]);
         expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(3);
     });
@@ -143,9 +143,9 @@ describe('AzureStorageDestination', () => {
         await destination.log(operational);
 
         expect(operationalContainer.blobNames).toEqual([
-            '2025010203.operational.log',
-            '2025010203.operational.2.log',
-            '2025010203.operational.3.log'
+            '202501020300.operational.log',
+            '202501020300.operational.2.log',
+            '202501020300.operational.3.log'
         ]);
         expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(3);
     });
@@ -167,8 +167,8 @@ describe('AzureStorageDestination', () => {
         await destination.log(operational);
 
         expect(operationalContainer.blobNames).toEqual([
-            '2025010203.operational.log',
-            '2025010203.operational.2.log'
+            '202501020300.operational.log',
+            '202501020300.operational.2.log'
         ]);
     });
 
@@ -192,8 +192,8 @@ describe('AzureStorageDestination', () => {
         await destination.log(operational);
 
         expect(operationalContainer.blobNames).toEqual([
-            '2025010203.operational.log',
-            '2025010203.operational.2.log'
+            '202501020300.operational.log',
+            '202501020300.operational.2.log'
         ]);
         expect(operationalContainer.appendBlock).toHaveBeenCalledTimes(1);
     });
@@ -214,8 +214,8 @@ describe('AzureStorageDestination', () => {
         await destination.log(operational);
 
         expect(operationalContainer.blobNames).toEqual([
-            '2025010203.operational.log',
-            '2025010203.operational.2.log'
+            '202501020300.operational.log',
+            '202501020300.operational.2.log'
         ]);
     });
 

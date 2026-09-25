@@ -36,6 +36,8 @@ export interface AzureStorageDestinationOptions extends LoggingPluginConfigurati
     'maxAppendBlockBytes'?: number & tags.Minimum<1>;
     /** Maximum number of blocks written to a single append blob before rotating to a suffixed blob. */
     'maxBlocksPerBlob'?: number & tags.Minimum<1> & tags.Maximum<50_000>;
+    /** The minutes duration that a log file will be written to before creating a new log file. */
+    'rotationIntervalMinutes'?: number & tags.Minimum<1> & tags.Maximum<1_440>;
 }
 
 /** Fully resolved options used internally by the Azure Storage destination. */
@@ -44,6 +46,8 @@ export interface ResolvedAzureStorageDestinationOptions extends LoggingPluginCon
     'maxAppendBlockBytes': number & tags.Minimum<1>;
     /** Maximum number of blocks written to a single append blob before rotating to a suffixed blob. */
     'maxBlocksPerBlob': number & tags.Minimum<1> & tags.Maximum<50_000>;
+    /** The minutes duration that a log file will be written to before creating a new log file. */
+    'rotationIntervalMinutes': number & tags.Minimum<1> & tags.Maximum<1_440>;
 }
 
 /** Static default options for Azure Storage append-blob logging. */
@@ -52,5 +56,7 @@ export const DEFAULT_AZURE_STORAGE_DESTINATION_OPTIONS: ResolvedAzureStorageDest
     // The stable limit supported by all Append Blob service API versions.
     'maxAppendBlockBytes': 4 * 1024 * 1024,
     // Azure's hard append-blob limit; rotating at this point uses the full available capacity.
-    'maxBlocksPerBlob': 50_000
+    'maxBlocksPerBlob': 50_000,
+    // Default to an hourly log file.
+    'rotationIntervalMinutes': 60
 };

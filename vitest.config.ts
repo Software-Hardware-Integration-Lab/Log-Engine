@@ -16,7 +16,8 @@ export default defineConfig({
             'include': ['bin/**/*.js'],
             'exclude': [
                 'bin/**/*.d.ts',
-                'bin/**/index.js'
+                'bin/**/index.js',
+                'bin/test-app'
             ],
             'thresholds': coverageThresholds,
             'reporter': [

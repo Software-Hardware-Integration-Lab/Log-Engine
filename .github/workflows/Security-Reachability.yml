@@ -32,7 +32,7 @@ jobs:
     permissions:
       issues: write
       contents: read
-      pull-requests: read
+      pull-requests: write
 
     # Set of commands to run to compute the reachability of CVEs in the codebase
     steps:
@@ -84,7 +84,7 @@ jobs:
       # validate:package:skip-reachability command so workflow validation does not modify its checkout.
       - name: Install Socket CLI
         background: true
-        run: sfw pip install socketsecurity==2.9.6 uv --upgrade
+        run: sfw pip install socketsecurity==2.10.0 uv --upgrade
 
       # Bring job back to sync execution by awaiting for all async jobs to finish before continuing
       - name: Steps - Convert Back To Synchronous Execution - Packages Updates/Setup

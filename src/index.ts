@@ -49,4 +49,4 @@ export type {
 
 export type { LoggingPluginContract } from './interfaces/plugins/LoggingPlugin.js';
 
-export type { Logger } from './Logger.js';
+export { Logger } from './Logger.js';
