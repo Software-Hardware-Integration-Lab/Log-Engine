@@ -145,7 +145,7 @@ describe('ConsoleDestination', () => {
 
         await destination!.auditLog(audit);
 
-        expect(warn).toHaveBeenCalledWith('2025-01-02 03:04:05.678: WARNING | warning | correlationId: 00000000-0000-0000-0000-000000000001 | userId: user', void 0);
+        expect(warn).toHaveBeenCalledWith('2025-01-02 03:04:05.678: WARNING | warning | correlationId: 00000000-0000-0000-0000-000000000001 | userId: user');
 
         expect(log).toHaveBeenCalledWith('2025-01-02 03:04:05.678: AUDIT : Update changed', audit);
     });
@@ -177,7 +177,7 @@ describe('ConsoleDestination', () => {
 
         await destination!.log(operational);
 
-        expect(error).toHaveBeenCalledWith('2025-01-02 03:04:05.678: WARNING | warning | correlationId: 00000000-0000-0000-0000-000000000001 | userId: user', void 0);
+        expect(error).toHaveBeenCalledWith('2025-01-02 03:04:05.678: WARNING | warning | correlationId: 00000000-0000-0000-0000-000000000001 | userId: user');
     });
 
     it('should dispose without error when no resources are held', async () => {
